@@ -17,7 +17,7 @@ from scipy.optimize import bisect
 from functools import partial
 from scipy.stats import halfcauchy,lognorm,norm
 from scipy.special import erf
-dir_  = "/pcdisk/boneym5/jolivares/Aspidistra/"
+dir_  = os.path.expanduser('~') +"/PyAspidistra/"
 real  = True
 model = str(sys.argv[1])
 rcut  = float(sys.argv[2])
