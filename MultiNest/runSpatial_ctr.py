@@ -11,14 +11,13 @@ import numpy as np
 from pandas import read_csv
 import os
 import corner
-from PyAstronomy.pyasl import positionAngle
 
 
 #########################################################################################
 from functools import partial
 from scipy.stats import halfcauchy,lognorm,norm
 from scipy.special import erf
-dir_  = "/pcdisk/boneym5/jolivares/Aspidistra/"
+dir_  = os.path.expanduser('~') +"/PyAspidistra/"
 real  = True
 model = str(sys.argv[1])
 rcut  = float(sys.argv[2])

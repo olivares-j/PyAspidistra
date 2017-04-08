@@ -61,9 +61,17 @@ if model == "GDP":
 	from Models.GDP import Module,Number,Density
 	#--------- Initial parameters --------------
 	namepar = ["$r_c$","$a$","$b$","$\gamma$"]
-	mins    = np.array([ 0.01  ,0.01,  0.01 , 0.01])
+	mins    = np.array([ 0.01  ,0.01,  0.01 ,-2.0])
 	maxs    = np.array([ 100.0  , 2.0, 50.0, 2.0])
 	params  = [100.0,1,25.0,0.0]
+
+if model == "GDPNRC":
+	from Models.GDPNRC import Module,Number,Density
+	#--------- Initial parameters --------------
+	namepar = ["$a$","$b$","$\gamma$"]
+	mins    = np.array([ 0.01,  0.01 , -2.0])
+	maxs    = np.array([  2.0, 50.0, 2.0])
+	params  = [1,25.0,0.0]
 
 if model == "MGDP":
 	from Models.MGDP import Module,Number,Density

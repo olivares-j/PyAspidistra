@@ -7,23 +7,22 @@ import scipy.integrate as integrate
 
 @jit
 def Support(params):
+    # if params[0] <= 0 : return False
     if params[0] <= 0 : return False
-    if params[1] <= 0 : return False
-    if params[3] >= 2 : return False
+    if params[2] >= 2 : return False
     return True
 
 @jit
 def Density(r,params,Rmax):
-    rc = params[0]
-    a  = params[1]
-    b  = params[2]
-    g  = params[3]
-    v1 = ((r/rc)**(-g))*(1.0 + (r/rc)**(1./a))**(-a*(b - g)) 
+    a  = params[0]
+    b  = params[1]
+    g  = params[2]
+    v1 = (r**(-g))*(1.0 + r**(1./a))**(-a*(b - g)) 
     w  = a*(b-g)
     x  = -a*(g-2.)
     y  = 1. - (a*(g-2.))
-    z  = -((rc/Rmax)**(-1./a))
-    v2 = -((rc**g)*((Rmax**(-1./a))**(a*(g-2.)))/(g-2.))*hyp2f1(w,x,y,z)
+    z  = -((1.0/Rmax)**(-1./a))
+    v2 = -(((Rmax**(-1./a))**(a*(g-2.)))/(g-2.))*hyp2f1(w,x,y,z)
     return v1/v2
 
 
