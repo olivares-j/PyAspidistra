@@ -63,11 +63,11 @@ cdts      = cdts[idx]
 
 ################################### MODEL ######################################################
 nameparCtr = ["$\phi$","$RA_{ctr}$","$Dec._{ctr}$"]
-minsCtr    = np.array([0.0,56.5,24.0])
-maxsCtr    = np.array([7.0,57.0,24.5])
+minsCtr    = np.array([1.0,56.5,24.0])
+maxsCtr    = np.array([3.0,57.0,24.5])
 
 if model == "EFF":
-	from Models.EFFCtr import Module,Number,Density
+	from ModelsCtr.EFF import Module,Number,Density
 	#--------- Initial parameters --------------
 	namepar = ["$r_c$","$\gamma$"]
 	mins    = np.array([0,  2.0])
@@ -75,23 +75,31 @@ if model == "EFF":
 	#--------- arguments of logLike function
 
 if model == "King":
-	from Models.KingCtr import Module,Number,Density
+	from ModelsCtr.King import Module,Number,Density
 	#--------- Initial parameters --------------
 	namepar = ["$r_c$", "$r_t$"]
-	mins    = np.array(([ 0.0, 5.0]))
-	maxs    = np.array(([ 5.0, 1000.0]))
+	mins    = np.array(([ 0.0, 10.0]))
+	maxs    = np.array(([ 5.0, 50.0]))
 
 
 if model == "MKing":
-	from Models.MKingCtr import Module,Number,Density
+	from ModelsCtr.MKing import Module,Number,Density
 	#--------- Initial parameters --------------
 	namepar = ["$r_c$","$r_t$","$a$","$b$"]
 	mins    = np.array([ 0.01  ,10.0 , 0.01, 0.01])
 	maxs    = np.array([ 500.0, 1000.0, 10.0, 50.0])
 	#--------- arguments of logLike function
 
+if model == "MKingRC":
+	from ModelsCtr.MKingRC import Module,Number,Density
+	#--------- Initial parameters --------------
+	namepar = ["$r_c$","$r_t$"]
+	mins    = np.array([ 0.0  ,10.0])
+	maxs    = np.array([ 10.0, 50.0])
+	#--------- arguments of logLike function
+
 if model == "GDP":
-	from Models.GDPCtr import Module,Number,Density
+	from ModelsCtr.GDP import Module,Number,Density
 	#--------- Initial parameters --------------
 	namepar = ["$r_c$","$a$","$b$","$\gamma$"]
 	mins    = np.array([ 0.01  ,0.01,  0.01 , 0.01])
@@ -99,7 +107,7 @@ if model == "GDP":
 	#--------- arguments of logLike function
 
 if model == "MGDP":
-	from Models.MGDPCtr import Module,Number,Density
+	from ModelsCtr.MGDP import Module,Number,Density
 	#--------- Initial parameters --------------
 	namepar = ["$r_c$","$a$","$b$"]
 	mins    = np.array([ 0.01  ,0.01, 0.01])
@@ -107,7 +115,7 @@ if model == "MGDP":
 	#--------- arguments of logLike function
 
 if model == "Centre":
-	from Models.Centre import Module,Number,Density
+	from ModelsCtr.Centre import Module,Number,Density
 	#--------- Initial parameters --------------
 	namepar = nameparCtr
 	support = np.vstack([minsCtr,maxsCtr]).T
@@ -119,7 +127,7 @@ else:
 #------------ Load Module -------
 Module  = Module(cdts,pro,rcut,support,Dist)
 
-dir_out  = dir_+'MultiNest/Samples/'+model+'_'+'Ctr'+'_'+str(int(rcut))
+dir_out  = dir_+'MultiNest/Samples/'+model+'_Ctr_'+str(int(rcut))
 if not os.path.exists(dir_out): os.mkdir(dir_out)
 #========================================================
 #--------- Dimension, walkers and inital positions -------------------------
@@ -127,7 +135,7 @@ if not os.path.exists(dir_out): os.mkdir(dir_out)
 ndim     = len(namepar)
 n_params = len(namepar)
 
-pymultinest.run(Module.LogLike,Module.Priors, n_params,resume = False, verbose = True,n_live_points=100,
+pymultinest.run(Module.LogLike,Module.Priors, n_params,resume = False, verbose = True,#n_live_points=100,
 	outputfiles_basename=dir_out+'/2-',multimodal=True, max_modes=10,sampling_efficiency = 'model')
 
 # lets analyse the results
