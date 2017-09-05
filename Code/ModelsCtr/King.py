@@ -1,128 +1,129 @@
 import sys
 import numpy as np
 from numba import jit
-from scipy.stats import norm
+import scipy.stats as st
+from Functions import Deg2pc,TruncSort
+from pandas import cut, value_counts
 
-D2R   = np.pi/180.
+print "King Centre imported!"
 
 @jit
-def Support(params):
-    rc = params[3]
-    rt = params[4]
-    if rc <= 0.0 : return False
+def Support(rc,rt):
+    if rc <= 0  : return False
     if rt <= rc : return False
     return True
 
 @jit
-def CDFv(r,rc,rt):
-    w = r**2 + rc**2
-    x = 1 + (rt/rc)**2
-    y = 1 + (r/rc)**2
+def cdf(r,params,Rm):
+    rc = params[2]
+    rt = params[3]
+    w = rc**2 +  r**2 
+    y = rc**2 + Rm**2
     z = rc**2 + rt**2
-    a = (r**2)/z +  4*(rc-np.sqrt(w))/np.sqrt(z) + np.log(w) -2*np.log(rc)
-    b = -4 + (rt**2)/z + 4*rc/np.sqrt(z)         + np.log(z) -2*np.log(rc)
-    NK  = a/b
-    result = np.zeros(len(r))
-    idBad  = np.where(r>rt)[0]
-    idOK   = np.where(r<=rt)[0]
-    result[idOK] = NK[idOK]
-    result[idBad] = 1
-    return result
+    a = (r**2)/z  +  4*(rc-np.sqrt(w))/np.sqrt(z) + np.log(w) - 2*np.log(rc)
+    b = (Rm**2)/z +  4*(rc-np.sqrt(y))/np.sqrt(z) + np.log(y) - 2*np.log(rc)
+    return a/b
 
 @jit
-def CDFs(r,rc,rt):
-    if r > rt:
-        return 1
-    w = r**2 + rc**2
-    x = 1 + (rt/rc)**2
-    y = 1 + (r/rc)**2
-    z = rc**2 + rt**2
-    a = (r**2)/z +  4*(rc-np.sqrt(w))/np.sqrt(z) + np.log(w) -2*np.log(rc)
-    b = -4 + (rt**2)/z + 4*rc/np.sqrt(z)         + np.log(z) -2*np.log(rc)
-    NK  = a/b
-    return NK
+def Number(r,params,Rm,Nstr):
+    # Rm must be less or equal to rt
+    return Nstr*cdf(r,params,Rm)
 
 @jit
-def Number(r,params,Rmax):
-    return (CDFv(r,params[3],params[4])/CDFs(Rmax,params[3],params[4]))
-
-def Density(r,params,Rmax):
-    return np.piecewise(r,[r>params[4],r<=params[4]],[0.0,
-        lambda x: King(x,params[3],params[4])/CDFs(Rmax,params[3],params[4])])
-
-@jit
-def King(r,rc,rt):
+def Kernel(r,rc,rt):
     x = 1 + (r/rc)**2
     y = 1 + (rt/rc)**2
-    z = rc**2 + rt**2
-    k   = 2*((x**(-0.5))-(y**-0.5))**2
-    norm= (rc**2)*(-4 + (rt**2)/z + 4*rc/np.sqrt(z) + np.log(z) -2*np.log(rc))
-    lik = k/norm
-    return lik
-
-@jit
-def LikePA(cdf,theta,sg):
-    return norm.pdf(cdf,loc=theta/(2.*np.pi),scale=sg)+ 1e-100
+    k = ((x**(-0.5))-(y**-0.5))**2
+    return k
 
 @jit
 def LikeField(r,rm):
     return 2.*r/rm**2
 
-@jit
-def LogLikeStar(x,params,Rmax,sg):
-    return np.log(x[0]*(x[1]*Density(x[1],params,Rmax))*LikePA(x[2],x[3],sg) + (1.-x[0])*LikeField(x[1],Rmax))
+def Density(r,params,Rmax):
+    rc = params[2]
+    rt = params[3]
+    ker = Kernel(r,rc,rt)
+    # In king's profile no objects is larger than tidal radius
+    idBad = np.where(r > rt)[0]
+    ker[idBad] = 0.0
+
+    # Normalisation constant
+    # w = rc**2 +  r**2 
+    y = rc**2 + Rmax**2
+    z = rc**2 + rt**2
+    a = (Rmax**2)/z +  4*(rc-np.sqrt(y))/np.sqrt(z) + np.log(y) - 2*np.log(rc) # Truncated at Rm
+    # a = (rt**2)/z - 4.0 +  4.0*(rc/np.sqrt(z)) + np.log(z) - 2*np.log(rc)  # Truncated at Rt (i.e. No truncated)
+    k  = 2.0/(a*(rc**2.0))
+
+    return k*ker
 
 class Module:
     """
     Chain for computing the likelihood 
     """
-    def __init__(self,cdts,pro,Rmax,trans_lim,Dist):
+    def __init__(self,cdts,Rcut,hyp,Dist,centre_init):
         """
         Constructor of the logposteriorModule
         """
-        self.cdts       = cdts
-        self.pro        = pro
-        self.Rmax       = Rmax
-        self.t          = trans_lim
+        rad,thet        = Deg2pc(cdts,centre_init,Dist)
+        c,r,t,self.Rmax = TruncSort(cdts,rad,thet,Rcut)
+        self.pro        = c[:,2]
+        self.cdts       = c[:,:2]
         self.Dist       = Dist
-        self.sg         = 0.01
-        print("Module Initialized")
+        #------------- poisson ----------------
+        self.quadrants  = [0,np.pi/2.0,np.pi,3.0*np.pi/2.0,2.0*np.pi]
+        self.poisson    = st.poisson(len(r)/4.0)
+        #-------------- priors ----------------
+        self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
+        self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
+        self.Prior_2    = st.halfcauchy(loc=0,scale=hyp[2])
+        self.Prior_3    = st.halfcauchy(loc=0,scale=hyp[3])
+        print "Module Initialized"
 
     def Priors(self,params, ndim, nparams):
-        #---------- Uniform Priors ------
-        for i in range(ndim):
-            params[i] = (params[i])*(self.t[i,1]-self.t[i,0])+self.t[i,0]
+        params[0]  = self.Prior_0.ppf(params[0])
+        params[1]  = self.Prior_1.ppf(params[1])
+        params[2]  = self.Prior_2.ppf(params[2])
+        params[3]  = self.Prior_3.ppf(params[3])
 
     def LogLike(self,params,ndim,nparams):
-        cntr  = params[1:3]
-        phi   = params[0]
-
+        ctr= params[:2]
+        rc = params[2]
+        rt = params[3]
         #----- Checks if parameters' values are in the ranges
-        if not Support(params):
+        if not Support(rc,rt):
             return -1e50
-        #============== Obtains radii and pa ===================
 
-        radii = np.arccos(np.sin(cntr[1]*D2R)*np.sin(self.cdts[:,1]*D2R)+
-                np.cos(cntr[1]*D2R)*np.cos(self.cdts[:,1]*D2R)*
-                np.cos((cntr[0]-self.cdts[:,0])*D2R))*self.Dist + 1e-20
-        theta = np.arctan2(np.sin((self.cdts[:,0]-cntr[0])*D2R),
-                         np.cos(cntr[1]*D2R)*np.tan(self.cdts[:,1]*D2R)-
-                         np.sin(cntr[1]*D2R)*np.cos((self.cdts[:,0]-cntr[0])*D2R))
-        # print(min(theta),max(theta))
-        idx   = np.where(theta  <= 0)[0]
-        theta[idx] = theta[idx] + 2*np.pi
-        theta = theta + phi
-        idx   = np.where(theta  <= 0)[0]
-        theta[idx] = theta[idx] + 2*np.pi
-        idx   = np.where(theta  > 2*np.pi)[0]
-        theta[idx] = theta[idx] - 2*np.pi
+        #------- Obtains radii and angles ---------
+        radii,theta    = Deg2pc(self.cdts,ctr,self.Dist)
 
-        idx   = np.argsort(theta)
-        cdf   = (1./len(theta))*np.arange(len(theta))
-        data  = np.vstack([self.pro[idx],radii[idx],cdf,theta[idx]]).T
+        ############### Radial likelihood ###################
 
-        #------ Computes Likelihood -----------
-        llike = np.sum(map(lambda x:LogLikeStar(x,params,self.Rmax,self.sg),data))
+        # Computes likelihood
+        lf = (1.0-self.pro)*LikeField(radii,self.Rmax)
+        lk = radii*(self.pro)*Kernel(radii,rc,rt)
+
+        # In king's profile no objects is larger than tidal radius
+        idBad = np.where(radii > rt)[0]
+        lk[idBad] = 0.0
+
+        # Normalisation constant
+        # w = rc**2 +  r**2 
+        y = rc**2 + self.Rmax**2
+        z = rc**2 + rt**2
+        a = (self.Rmax**2)/z +  4*(rc-np.sqrt(y))/np.sqrt(z) + np.log(y) - 2*np.log(rc) # Truncated at Rm
+        # a = (rt**2)/z - 4.0 +  4.0*(rc/np.sqrt(z)) + np.log(z) - 2*np.log(rc)  # Truncated at Rt (i.e. No truncated)
+        k  = 2.0/(a*(rc**2.0))
+
+        llike_r  = np.sum(np.log((k*lk + lf)))
+        ##################### POISSON ###################################
+        quarter  = cut(theta,bins=self.quadrants,include_lowest=True)
+        counts   = value_counts(quarter)
+        llike_t  = self.poisson.logpmf(counts).sum()
+        ##################################################################
+
+        llike = llike_t + llike_r
         # print(llike)
         return llike
 

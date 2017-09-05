@@ -2,6 +2,9 @@ import sys
 import numpy as np
 from numba import jit
 import scipy.stats as st
+from Functions import Deg2pc,TruncSort
+
+print "EFF NoCentre imported!"
 
 @jit
 def Support(rc,g):
@@ -46,16 +49,18 @@ class Module:
     """
     Chain for computing the likelihood 
     """
-    def __init__(self,cdts,Rmax,hyp,Dist):
+    def __init__(self,cdts,Rcut,hyp,Dist,centre_init):
         """
         Constructor of the logposteriorModule
         """
-        self.pro        = cdts[:,2]
-        self.rad        = cdts[:,3]
+        rad,thet        = Deg2pc(cdts,centre_init,Dist)
+        c,rad,_,Rmax    = TruncSort(cdts,rad,thet,Rcut)
+        self.pro        = c[:,2]
+        self.rad        = rad
         self.Rmax       = Rmax
         self.Prior_0    = st.halfcauchy(loc=0,scale=hyp[0])
         self.Prior_1    = st.uniform(loc=0,scale=hyp[1])
-        print("Module Initialized")
+        print "Module Initialized"
 
     def Priors(self,params, ndim, nparams):
         #-------- Uniform Priors -------
