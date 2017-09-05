@@ -7,7 +7,7 @@ from pandas import cut, value_counts
 
 from scipy.special import hyp2f1
 
-print "GDP Elliptic imported!"
+print "GDP Segregated imported!"
 
 @jit
 def Support(rca,rcb,a,b,g):
@@ -89,6 +89,21 @@ class Module:
         self.pro        = c[:,2]
         self.cdts       = c[:,:2]
         self.Dist       = Dist
+        #-------------- Finds the mode of the band -------
+        band_all        = c[:,3]
+        idv             = np.where(np.isfinite(c[:,3]))[0]
+        band            = c[idv,3]
+        kde             = st.gaussian_kde(band)
+        x               = np.linspace(np.min(band),np.max(band),num=1000)
+        mode_band       = x[kde(x).argmax()]
+        print "Mode of band at ",mode_band
+
+        #---- repleace NANs by mode -----
+        idnv            = np.setdiff1d(np.arange(len(band_all)),idv)
+        band_all[idnv]  = mode_band
+        self.delta_band = band_all - mode_band
+
+
         #------------- poisson ----------------
         self.quadrants  = [0,np.pi/2.0,np.pi,3.0*np.pi/2.0,2.0*np.pi]
         self.poisson    = st.poisson(len(r)/4.0)
@@ -101,6 +116,7 @@ class Module:
         self.Prior_5    = st.uniform(loc=0.01,scale=hyp[3])
         self.Prior_6    = st.uniform(loc=0.01,scale=hyp[4])
         self.Prior_7    = st.uniform(loc=0.0,scale=hyp[5])
+        self.Prior_8    = st.uniform(loc=-hyp[6],scale=2*hyp[6])
         print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):
@@ -113,6 +129,7 @@ class Module:
         params[5]  = self.Prior_5.ppf(params[5])
         params[6]  = self.Prior_6.ppf(params[6])
         params[7]  = self.Prior_7.ppf(params[7])
+        params[8]  = self.Prior_8.ppf(params[8])
 
     def LogLike(self,params,ndim,nparams):
         ctr = params[:2]
@@ -122,6 +139,7 @@ class Module:
         a   = params[5]
         b   = params[6]
         g   = params[7]
+        slp = params[8]
          #----- Checks if parameters' values are in the ranges
         if not Support(rca,rcb,a,b,g) : 
             return -1e50
@@ -129,7 +147,14 @@ class Module:
         #------- Obtains radii and angles ---------
         radii,theta    = RotRadii(self.cdts,ctr,self.Dist,dlt)
 
-        rcs = (rca*rcb)/np.sqrt((rcb*np.cos(theta))**2+(rca*np.sin(theta))**2)
+        rc = (rca*rcb)/np.sqrt((rcb*np.cos(theta))**2+(rca*np.sin(theta))**2)
+
+        # Include mass segregation with linear relation
+        rcs = rc + (slp*self.delta_band)
+
+        #----- Checks if parameters' values are in the ranges
+        if not Support(np.min(rcs),1,a,b,g) : 
+            return -1e50
 
         ############### Radial likelihood ###################
         # Computes likelihood
@@ -152,6 +177,8 @@ class Module:
         ##################################################################
 
         llike = llike_t + llike_r
+        if not np.isfinite(llike):
+            return -1e50
         # print(llike)
         return llike
 

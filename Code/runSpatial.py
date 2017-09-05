@@ -60,47 +60,97 @@ else:
 if not os.path.exists(dir_out): os.mkdir(dir_out)
 ################################### MODEL ######################################################
 if model == "EFF":
-	#--------- Initial parameters --------------
-	namepar = ["$r_c$ [pc]","$\gamma$"]
-	params  = [2.0,3.0]
-	hyp     = np.array([10,10])
-	rng     = [[0,10],[0,10]]
-
+	if exte == "None":
+		#----------------------------------
+		namepar = ["$r_c$ [pc]","$\gamma$"]
+		params  = [2.0,3.0]
+		hyp     = np.array([10,10])
+		rng     = [[0,10],[0,10]]
+	if exte == "Ell" or exte =="Seg":
+		print("Sorry this model does not have this extension")
+		sys.exit()
 
 if model == "King":
-	#--------- Initial parameters --------------
-	namepar = ["$r_c$ [pc]", "$r_t$ [pc]"]
-	params  = [2.0,20.0]
-	hyp     = np.array([10,10])
-	rng     = [[0,5],[0,50]]
+	if exte == "None":
+		#--------- Initial parameters --------------
+		namepar = ["$r_c$ [pc]", "$r_t$ [pc]"]
+		params  = [2.0,20.0]
+		hyp     = np.array([10,10])
+		rng     = [[0,5],[0,50]]
+	if exte == "Ell" or exte =="Seg":
+		#--------- Initial parameters --------------
+		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]",
+					 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
+		params  = [np.pi/4,2.0,20.0,2.0,20.0]
+		hyp     = np.array([10,10])
+		rng     = [[-3,3],[0,5],[0,50],[0,5],[0,50]]
+
 
 if model == "GKing":
-	#--------- Initial parameters --------------
-	namepar = ["$r_c$ [pc]","$r_t$ [pc]","$\\alpha$","$\\beta$"]
-	params  = [2.0,20.0,0.5,2.0]
-	hyp     = np.array([10,10,4,4])
-	rng     = [[0,20],[0,50],[0,5],[0,5]]
+	if exte == "None":
+		#--------- Initial parameters --------------
+		namepar = ["$r_c$ [pc]","$r_t$ [pc]","$\\alpha$","$\\beta$"]
+		params  = [2.0,20.0,0.5,2.0]
+		hyp     = np.array([10,10,4,4])
+		rng     = [[0,20],[0,50],[0,5],[0,5]]
+
+	if exte == "Ell" or exte =="Seg":
+
+		#--------- Initial parameters --------------
+		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]", 
+					"$r_{cb}$ [pc]","$r_{tb}$ [pc]","$\\alpha$","$\\beta$"]
+		params  = [np.pi/4,2.0,20.0,2.0,20.0,0.5,2.0]
+		hyp     = np.array([10,10,10,10,4,4])
+		rng     = [[-3,3],[0,20],[0,50],[0,20],[0,50],[0,5],[0,5]]
 
 if model == "OGKing":
-	#--------- Initial parameters --------------
-	namepar = ["$r_c$ [pc]","$r_t$ [pc]"]
-	params  = [2.0,20.0]
-	hyp     = np.array([10,10])
-	rng     = [[0,10],[0,50]]
+	if exte == "None":
+		#--------- Initial parameters --------------
+		namepar = ["$r_c$ [pc]","$r_t$ [pc]"]
+		params  = [2.0,20.0]
+		hyp     = np.array([10,10])
+		rng     = [[0,10],[0,50]]
+
+	if exte == "Ell" or exte =="Seg":
+		#--------- Initial parameters --------------
+		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]$",
+					 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
+		params  = [np.pi/4,2.0,20.0,2.0,20.0]
+		hyp     = np.array([10,10,10,10])
+		rng     = [[-3,3],[0,20],[0,50],[0,20],[0,50]]
 
 if model == "GDP":
+	if exte == "None":
 	#--------- Initial parameters --------------
-	namepar = ["$r_c$ [pc]","$\\alpha$","$\\beta$","$\gamma$"]
-	params  = [2.0,0.5,2.0,0.1]
-	hyp     = np.array([10,2,100,2])
-	rng     = [[0,50],[0,2],[0,100],[0,1]]
+		namepar = ["$r_c$ [pc]","$\\alpha$","$\\beta$","$\gamma$"]
+		params  = [2.0,0.5,2.0,0.1]
+		hyp     = np.array([10,2,100,2])
+		rng     = [[0,50],[0,2],[0,100],[0,1]]
+
+	if exte == "Ell" or exte =="Seg":
+		#--------- Initial parameters --------------
+		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{cb}$ [pc]",
+					"$\\alpha$","$\\beta$","$\gamma$"]
+		params  = [np.pi/4,2.0,2.0,0.5,2.0,0.0]
+		hyp     = np.array([10,2,100,2])
+		rng     = [[-3,3],[0,50],[0,50],[0,2],[0,100],[0,2]]
+
 
 if model == "RGDP":
-	#--------- Initial parameters --------------
-	namepar = ["$r_c$ [pc]","$\\alpha$","$\\beta$"]
-	params  = [2.0,0.5,2.0]
-	hyp     = np.array([10,2,100])
-	rng     = [[0,50],[0,2],[0,100]]
+	if exte == "None":
+		#--------- Initial parameters --------------
+		namepar = ["$r_c$ [pc]","$\\alpha$","$\\beta$"]
+		params  = [2.0,0.5,2.0]
+		hyp     = np.array([10,2,100])
+		rng     = [[0,50],[0,2],[0,100]]
+
+	if exte == "Ell" or exte =="Seg":
+		#--------- Initial parameters --------------
+		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{cb}$ [pc]",
+					"$\\alpha$","$\\beta$"]
+		params  = [np.pi/4,2.0,2.0,0.5,2.0]
+		hyp     = np.array([10,2,100])
+		rng     = [[-3,3],[0,50],[0,50],[0,2],[0,100]]
 
 
 # if model == "RGDP1":
@@ -121,66 +171,35 @@ if model == "RGDP":
 nameparCtr = ["$\\alpha_c\ \ [^\circ]$","$\\delta_c\ \ [^\circ]$"]
 hypCtr    = np.array([1.0,1.0])
 rngCtr    = [[56,57],[23,25]]
-
-######## parameter of elliptic ############################
-if model == "King" and exte == "Ell":
-	#--------- Initial parameters --------------
-	namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]",
-				 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
-	params  = [np.pi/4,2.0,20.0,2.0,20.0]
-	hyp     = np.array([10,10])
-	rng     = [[-3,3],[0,5],[0,50],[0,5],[0,50]]
-
-if model == "GKing" and exte == "Ell":
-	#--------- Initial parameters --------------
-	namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]", 
-				"$r_{cb}$ [pc]","$r_{tb}$ [pc]","$\\alpha$","$\\beta$"]
-	params  = [np.pi/4,2.0,20.0,2.0,20.0,0.5,2.0]
-	hyp     = np.array([10,10,10,10,4,4])
-	rng     = [[-3,3],[0,20],[0,50],[0,20],[0,50],[0,5],[0,5]]
-
-if model == "OGKing" and exte == "Ell":
-	#--------- Initial parameters --------------
-	namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]$",
-				 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
-	params  = [np.pi/4,2.0,20.0,2.0,20.0]
-	hyp     = np.array([10,10,10,10])
-	rng     = [[-3,3],[0,20],[0,50],[0,20],[0,50]]
-
-if model == "RGDP" and exte == "Ell":
-	#--------- Initial parameters --------------
-	namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{cb}$ [pc]",
-				"$\\alpha$","$\\beta$"]
-	params  = [np.pi/4,2.0,2.0,0.5,2.0]
-	hyp     = np.array([10,2,100])
-	rng     = [[-3,3],[0,50],[0,50],[0,2],[0,100]]
-
-if model == "GDP" and exte == "Ell":
-	#--------- Initial parameters --------------
-	namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{cb}$ [pc]",
-				"$\\alpha$","$\\beta$","$\gamma$"]
-	params  = [np.pi/4,2.0,2.0,0.5,2.0,0.0]
-	hyp     = np.array([10,2,100,2])
-	rng     = [[-3,3],[0,50],[0,50],[0,2],[0,100],[0,2]]
-
+######### Parameter of luminosity segregation #########
+nameSg    = ["Slope [pc/mag]"]
+hypSg     = np.array([1])
+rngSg     = [[-1,1]]
 #####################################################
 
 #------- concatenate parameters
-if not exte == "None":
+if not exte == "None" :
 	namepar = nameparCtr + namepar
 	hyp     = np.append(hypCtr,hyp)
 	rng     = sum([rngCtr,rng],[])
+
+if exte == "Seg":
+	namepar = namepar + nameSg
+	hyp     = np.append(hyp,hypSg)
+	rng     = sum([rng,rngSg],[])
+
 ##################### DATA ##############################################################
 Dist    = 136.0
 centre  = [56.65,24.13]
 if real :
 	#------- reads data ---------------
 	fdata = dir_+'Data/OnlyTycho.csv'
-	data  = np.array(pd.read_csv(fdata,header=0,sep=','))
-	cdtsT = np.array(data[:,[1,2,32]],dtype=np.float64)
+	cdtsT = np.array(pd.read_csv(fdata,header=0,sep=',',usecols=[1,2,17,32],dtype=np.float64))#K band col=21
+	cdtsT[:,[2, 3]] = cdtsT[:,[3, 2]] # Puts band in last coordinate
 	fdata = dir_+'Data/Members-0.84.csv'
-	data  = np.array(pd.read_csv(fdata,header=0,sep=','))
-	cdtsD = np.array(data[:,[10,11,8]],dtype=np.float64)
+	cdtsD  = np.array(pd.read_csv(fdata,header=0,sep=',',usecols=[5,8,10,11],dtype=np.float64)) #K band col=7
+	cdtsD[:,[0,1,2,3]] = cdtsD[:,[2,3,1,0]] # reorder
+	print("Make shure to have data in right order! (R.A., Dec. Prob., Band)")
 	cdts  = np.vstack([cdtsT,cdtsD])
 	#---- removes duplicateds --------
 	sumc  = np.sum(cdts[:,:2],axis=1)
@@ -229,10 +248,10 @@ samples = ana.get_data()[:,2:]
 np.savetxt(dir_out+'/0-foo.csv',samples, delimiter=",")
 
 # MAP   = np.array(summary["modes"][0]["maximum"])
-# MAP   = np.array(summary["modes"][0]["maximum a posterior"])
+MAP   = np.array(summary["modes"][0]["maximum a posterior"])
 # MAP   = np.array(summary["modes"][0]["mean"])
+# MAP   = fMAP(samples)
 
-MAP   = fMAP(samples)
 print()
 print("-" * 30, 'ANALYSIS', "-" * 30)
 print("Global Evidence:\n\t%.15e +- %.15e" % (summary['nested sampling global log-evidence'], 

@@ -86,7 +86,7 @@ class Module:
         #-------------- priors ----------------
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
-        self.Prior_2    = st.uniform(loc=-np.pi,scale=np.pi)
+        self.Prior_2    = st.uniform(loc=-0.5*np.pi,scale=np.pi)
         self.Prior_3    = st.halfcauchy(loc=0,scale=hyp[2])
         self.Prior_4    = st.halfcauchy(loc=0,scale=hyp[3])
         self.Prior_5    = st.halfcauchy(loc=0,scale=hyp[2])
@@ -146,6 +146,8 @@ class Module:
         ##################################################################
 
         llike = llike_t + llike_r
+        if not np.isfinite(llike):
+            return -1e50
         # print(llike)
         return llike
 
