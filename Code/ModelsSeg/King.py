@@ -11,8 +11,10 @@ print "King Segregated imported!"
 def Support(rca,rta,rcb,rtb):
     if rca <= 0 : return False
     if rcb <= 0 : return False
+    if rcb > rca: return False
     if rta <= rca : return False
     if rtb <= rcb : return False
+    if rtb > rta: return False
     return True
 
 @jit
@@ -52,6 +54,7 @@ def LikeField(r,rm):
 def Density(r,params,Rm):
     rc = params[3]
     rt = params[4]
+    # print rc,rt
 
     ker = Kernel1(r,rc,rt)
     # In king's profile no objects is larger than tidal radius
@@ -68,6 +71,10 @@ def Density(r,params,Rm):
     k  = 2.0/cte
 
     return k*ker
+
+def DenSeg(r,params,Rm,delta):
+    params[3] = params[3] + (delta*params[7])
+    return Density(r,params,Rm)
 
 @jit
 def NormCte(z):
@@ -100,13 +107,13 @@ class Module:
         band            = c[idv,3]
         kde             = st.gaussian_kde(band)
         x               = np.linspace(np.min(band),np.max(band),num=1000)
-        mode_band       = x[kde(x).argmax()]
-        print "Mode of band at ",mode_band
+        self.mode       = x[kde(x).argmax()]
+        print "Mode of band at ",self.mode
 
         #---- repleace NANs by mode -----
         idnv            = np.setdiff1d(np.arange(len(band_all)),idv)
-        band_all[idnv]  = mode_band
-        self.delta_band = band_all - mode_band
+        band_all[idnv]  = self.mode
+        self.delta_band = band_all - self.mode
 
 
         #------------- poisson ----------------
@@ -120,7 +127,7 @@ class Module:
         self.Prior_4    = st.halfcauchy(loc=0,scale=hyp[3])
         self.Prior_5    = st.halfcauchy(loc=0,scale=hyp[2])
         self.Prior_6    = st.halfcauchy(loc=0,scale=hyp[3])
-        self.Prior_7    = st.uniform(loc=-hyp[4],scale=2*hyp[4])
+        self.Prior_7    = st.uniform(loc=hyp[4],scale=hyp[5])
         print "Module Initialized"
 
     def Priors(self,params, ndim, nparams):
@@ -155,7 +162,7 @@ class Module:
         rcs = rc + (slp*self.delta_band)
 
         #----- Checks if parameters' values are in the ranges
-        if not Support(np.min(rcs),np.min(rts),1,2):
+        if np.min(rcs) <= 0 or np.greater(rcs,rts).any():
             return -1e50
 
         ############### Radial likelihood ###################

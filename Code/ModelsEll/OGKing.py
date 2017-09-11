@@ -13,14 +13,16 @@ lo     = 1e-5
 def Support(rca,rta,rcb,rtb):
     if rca <= 0 : return False
     if rcb <= 0 : return False
+    if rcb > rca: return False
     if rta <= rca : return False
     if rtb <= rcb : return False
+    if rtb > rta: return False
     return True
 
 @jit
 def Kernel(r,rc,rt):
-    a  = 0.48
-    b  = 1.22
+    a  = 0.45
+    b  = 1.18
     x  = (1.0 +  (r/rc)**(1.0/a))**(-a)
     y  = (1.0 + (rt/rc)**(1.0/a))**(-a)
     z  = (x-y + 0j)**b
@@ -28,8 +30,8 @@ def Kernel(r,rc,rt):
 
 @jit
 def Kernel1(r,rc,rt):
-    a  = 0.48
-    b  = 1.22
+    a  = 0.45
+    b  = 1.18
     x  = (1.0 +  (r/rc)**(1./a))**-a
     y  = (1.0 + (rt/rc)**(1./a))**-a
     z  = (x-y + 0j)**b
@@ -139,6 +141,8 @@ class Module:
         k = 1.0/cte
 
         llike_r  = np.sum(np.log((k*lk + lf)))
+        if np.isnan(llike_r):
+            return -1e50
         ##################### POISSON ###################################
         quarter  = cut(theta,bins=self.quadrants,include_lowest=True)
         counts   = value_counts(quarter)
@@ -146,8 +150,6 @@ class Module:
         ##################################################################
 
         llike = llike_t + llike_r
-        if not np.isfinite(llike):
-            return -1e50
         # print(llike)
         return llike
 

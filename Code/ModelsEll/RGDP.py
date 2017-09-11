@@ -13,8 +13,10 @@ print "RGDP Elliptic imported!"
 def Support(rca,rcb,a,b):
     if rca <= 0 : return False
     if rcb <= 0 : return False
+    if rcb > rca: return False
     if a   <= 0 : return False
     if b   <  0 : return False
+    if a > 100.0 or b > 100.0 : return False
     return True
 
 @jit
@@ -88,8 +90,8 @@ class Module:
         self.Prior_2    = st.uniform(loc=-0.5*np.pi,scale=np.pi)
         self.Prior_3    = st.halfcauchy(loc=0.0,scale=hyp[2])
         self.Prior_4    = st.halfcauchy(loc=0.0,scale=hyp[2])
-        self.Prior_5    = st.uniform(loc=0.01,scale=hyp[3])
-        self.Prior_6    = st.uniform(loc=0.01,scale=hyp[4])
+        self.Prior_5    = st.halfcauchy(loc=0.01,scale=hyp[3])
+        self.Prior_6    = st.halfcauchy(loc=0.01,scale=hyp[4])
         print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):

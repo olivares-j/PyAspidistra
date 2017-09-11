@@ -10,6 +10,7 @@ print "EFF NoCentre imported!"
 def Support(rc,g):
     if rc <= 0.0 : return False
     if  g <= 2.0 : return False
+    if  g > 100.0 : return False
     return True
 
 @jit
@@ -49,17 +50,18 @@ class Module:
     """
     Chain for computing the likelihood 
     """
-    def __init__(self,cdts,Rcut,hyp,Dist,centre_init):
+    def __init__(self,cdts,Rcut,hyp,Dist,centre):
         """
         Constructor of the logposteriorModule
         """
-        rad,thet        = Deg2pc(cdts,centre_init,Dist)
-        c,rad,_,Rmax    = TruncSort(cdts,rad,thet,Rcut)
+        rad,thet        = Deg2pc(cdts,centre,Dist)
+        c,r,t,self.Rmax = TruncSort(cdts,rad,thet,Rcut)
         self.pro        = c[:,2]
-        self.rad        = rad
-        self.Rmax       = Rmax
-        self.Prior_0    = st.halfcauchy(loc=0,scale=hyp[0])
-        self.Prior_1    = st.uniform(loc=0,scale=hyp[1])
+        self.rad        = r
+        
+        self.Prior_0    = st.halfcauchy(loc=0.01,scale=hyp[0])
+        self.Prior_1    = st.halfcauchy(loc=2.001,scale=hyp[1])
+                        
         print "Module Initialized"
 
     def Priors(self,params, ndim, nparams):
@@ -87,7 +89,7 @@ class Module:
         k  = 1.0/(a*(rc**2.0))
 
         llike  = np.sum(np.log((k*lk + lf)))
-        # print(llike)
+        # print llike 
         return llike
 
 

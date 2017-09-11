@@ -11,8 +11,10 @@ print "King Elliptic imported!"
 def Support(rca,rta,rcb,rtb):
     if rca <= 0 : return False
     if rcb <= 0 : return False
+    if rcb > rca: return False
     if rta <= rca : return False
     if rtb <= rcb : return False
+    if rtb > rta: return False
     return True
 
 @jit

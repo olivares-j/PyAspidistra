@@ -41,6 +41,9 @@ def DenNum(r,Rmax,nbins=41):
 	dens[:,1]  = np.sqrt(hist)/da
 	dens       = dens/np.sum(dens[:,0]*bins*dr)
 	Nr         = np.arange(len(r))
+	# bins       = bins - bins[0]
+
+	# print np.sum(dens[:,0]*bins*dr)
 	return Nr,bins,dens
 
 @jit
@@ -78,6 +81,11 @@ def fCovar(samples,MAP,sigma=68.27):
 	idx    = idx[idxs]
 	cov    = np.cov(samples[idx],rowvar=False)
 	return cov
+
+@jit
+def Epsilon(c):
+	return 1.0 - (c[1]/c[0])
+
 
 
 

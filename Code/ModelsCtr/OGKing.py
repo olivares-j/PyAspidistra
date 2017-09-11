@@ -19,8 +19,8 @@ def Support(rc,rt):
 def Kernel(r,params):
     rc = params[2]
     rt = params[3]
-    a  = 0.48
-    b  = 1.22
+    a  = 0.32
+    b  = 1.16
     x  = (1.0 +  (r/rc)**(1./a))**-a
     y  = (1.0 + (rt/rc)**(1./a))**-a
     return (x-y)**b
@@ -116,6 +116,8 @@ class Module:
         k = 1.0/cte
 
         llike_r  = np.sum(np.log((k*lk + lf)))
+        if np.isnan(llike_r):
+            return -1e50
         ##################### POISSON ###################################
         quarter  = cut(theta,bins=self.quadrants,include_lowest=True)
         counts   = value_counts(quarter)

@@ -11,6 +11,7 @@ print "EFF Centre imported!"
 def Support(rc,g):
     if rc <= 0.0 : return False
     if  g <= 2.0 : return False
+    if  g > 100.0 : return False
     return True
 
 @jit
@@ -65,8 +66,8 @@ class Module:
         #-------------- priors ----------------
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
-        self.Prior_2    = st.halfcauchy(loc=0,scale=hyp[2])
-        self.Prior_3    = st.uniform(loc=0,scale=hyp[3])
+        self.Prior_2    = st.halfcauchy(loc=0.0,scale=hyp[2])
+        self.Prior_3    = st.halfcauchy(loc=2.01,scale=hyp[3])
         print "Module Initialized"
 
     def Priors(self,params, ndim, nparams):

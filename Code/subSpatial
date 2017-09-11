@@ -3,7 +3,9 @@
 DIR     = /pcdisk/boneym5/jolivares/PyAspidistra/Code/
 DIR_LOG = $(DIR)/Log
 
-RCUT = 20
+
+#EXT  = Ctr
+#EXT  = Ell
 EXT  = Seg
 
 notification            = Error
@@ -21,19 +23,32 @@ output                  = $(DIR_LOG)/$(cluster)_$(process).out
 error                   = $(DIR_LOG)/$(cluster)_$(process).err
 log                     = $(DIR_LOG)/$(cluster)_$(process).log
 
-######## This is only available for EXT == Ctr ########
+RCUT = 7
+
 #arguments               = EFF $(RCUT) $(EXT) 
 #queue
-#######################################################
-
-
-arguments               = GDP $(RCUT) $(EXT) 
-queue
+#arguments               = GDP $(RCUT) $(EXT) 
+#queue
 arguments               = GKing $(RCUT) $(EXT) 
 queue
 arguments               = King $(RCUT) $(EXT) 
 queue
 arguments               = OGKing $(RCUT) $(EXT) 
 queue
-arguments               = RGDP $(RCUT) $(EXT) 
+#arguments               = RGDP $(RCUT) $(EXT) 
+#queue
+
+RCUT = 20
+
+#arguments               = EFF $(RCUT) $(EXT) 
+#queue
+#arguments               = GDP $(RCUT) $(EXT) 
+#queue
+arguments               = GKing $(RCUT) $(EXT) 
 queue
+arguments               = King $(RCUT) $(EXT) 
+queue
+arguments               = OGKing $(RCUT) $(EXT) 
+queue
+#arguments               = RGDP $(RCUT) $(EXT) 
+#queue

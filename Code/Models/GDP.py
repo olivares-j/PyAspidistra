@@ -2,6 +2,7 @@ import sys
 import numpy as np
 from numba import jit
 import scipy.stats as st
+from Functions import Deg2pc,TruncSort
 
 from scipy.special import hyp2f1
 
@@ -68,17 +69,19 @@ class Module:
     """
     Chain for computing the likelihood 
     """
-    def __init__(self,cdts,Rmax,hyp,Dist):
+    def __init__(self,cdts,Rcut,hyp,Dist,centre):
         """
         Constructor of the logposteriorModule
         """
-        self.pro        = cdts[:,2]
-        self.rad        = cdts[:,3]
-        self.Rmax       = Rmax
+        rad,thet        = Deg2pc(cdts,centre,Dist)
+        c,r,t,self.Rmax = TruncSort(cdts,rad,thet,Rcut)
+        self.pro        = c[:,2]
+        self.rad        = r
+        # -------- Priors --------
         self.Prior_0    = st.halfcauchy(loc=0,scale=hyp[0])
-        self.Prior_1    = st.uniform(loc=0.01,scale=hyp[1])
-        self.Prior_2    = st.uniform(loc=0.01,scale=hyp[2])
-        self.Prior_3    = st.uniform(loc=0.0,scale=2)
+        self.Prior_1    = st.halfcauchy(loc=0.01,scale=hyp[1])
+        self.Prior_2    = st.halfcauchy(loc=0.01,scale=hyp[2])
+        self.Prior_3    = st.halfcauchy(loc=0.0,scale=hyp[3])
         print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):

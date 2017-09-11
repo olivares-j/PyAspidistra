@@ -13,10 +13,12 @@ print "GDP Segregated imported!"
 def Support(rca,rcb,a,b,g):
     if rca <= 0 : return False
     if rcb <= 0 : return False
+    if rcb > rca: return False
     if a   <= 0 : return False
     if b   <  0 : return False
     if g   <  0 : return False
     if g   >= 2 : return False
+    if a > 100.0 or b > 100.0 : return False   # To avoid overflows
     return True
 
 @jit
@@ -70,7 +72,12 @@ def Density(r,params,Rm):
     betainc = (((x+0j)**u)/u)*hyp2f1(u,1.0-v,u+1.0,x)
     k  = 1.0/np.abs(z*betainc)
 
-    return k*Kernel(r,rca,a,b,g)
+    return k*Kernel1(r,rca,a,b,g)
+
+def DenSeg(r,params,Rm,delta):
+    params[3] = params[3] + (delta*params[8])
+    return Density(r,params,Rm)
+
 
 @jit
 def LikeField(r,rm):
@@ -95,13 +102,13 @@ class Module:
         band            = c[idv,3]
         kde             = st.gaussian_kde(band)
         x               = np.linspace(np.min(band),np.max(band),num=1000)
-        mode_band       = x[kde(x).argmax()]
-        print "Mode of band at ",mode_band
+        self.mode       = x[kde(x).argmax()]
+        print "Mode of band at ",self.mode
 
         #---- repleace NANs by mode -----
         idnv            = np.setdiff1d(np.arange(len(band_all)),idv)
-        band_all[idnv]  = mode_band
-        self.delta_band = band_all - mode_band
+        band_all[idnv]  = self.mode
+        self.delta_band = band_all - self.mode
 
 
         #------------- poisson ----------------
@@ -110,13 +117,13 @@ class Module:
         #-------------- priors ----------------
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
-        self.Prior_2    = st.uniform(loc=-np.pi,scale=np.pi)
+        self.Prior_2    = st.uniform(loc=-0.5*np.pi,scale=np.pi)
         self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[2])
         self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[2])
-        self.Prior_5    = st.uniform(loc=0.01,scale=hyp[3])
-        self.Prior_6    = st.uniform(loc=0.01,scale=hyp[4])
-        self.Prior_7    = st.uniform(loc=0.0,scale=hyp[5])
-        self.Prior_8    = st.uniform(loc=-hyp[6],scale=2*hyp[6])
+        self.Prior_5    = st.halfcauchy(loc=0.01,scale=hyp[3])
+        self.Prior_6    = st.halfcauchy(loc=0.01,scale=hyp[4])
+        self.Prior_7    = st.halfcauchy(loc=0.01,scale=hyp[5])
+        self.Prior_8    = st.norm(loc=hyp[6],scale=hyp[7])
         print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):
@@ -153,7 +160,7 @@ class Module:
         rcs = rc + (slp*self.delta_band)
 
         #----- Checks if parameters' values are in the ranges
-        if not Support(np.min(rcs),1,a,b,g) : 
+        if np.min(rcs) <= 0 : 
             return -1e50
 
         ############### Radial likelihood ###################
@@ -165,9 +172,11 @@ class Module:
         x = -1.0*((rcs/self.Rmax)**(-1.0/a))
         u = -a*(g-2.0)
         v = 1.0+ a*(g-b)
+        w =  (((x+0j)**u)/u)
         z = ((-1.0+0j)**(a*(g-2.0)))*a*(rcs**2)
-        betainc = (((x+0j)**u)/u)*hyp2f1(u,1.0-v,u+1.0,x)
-        k  = 1.0/np.abs(z*betainc)
+        h = hyp2f1(u,1.0-v,u+1.0,x)
+        cte = np.abs(z*h*w)
+        k   = 1.0/cte
 
         llike_r  = np.sum(np.log((k*lk + lf)))
         ##################### POISSON ###################################
@@ -177,8 +186,11 @@ class Module:
         ##################################################################
 
         llike = llike_t + llike_r
-        if not np.isfinite(llike):
-            return -1e50
+        # if not np.isfinite(llike):
+        #     ids = np.where(np.isnan(k))[0]
+        #     print h[ids],u,v,a,b,g
+        #     sys.exit()
+        #     return -1e50
         # print(llike)
         return llike
 

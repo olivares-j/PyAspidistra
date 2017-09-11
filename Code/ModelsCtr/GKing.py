@@ -11,53 +11,72 @@ print "GKing Centre imported!"
 lo     = 1e-5
 
 @jit
-def Support(params):
-    rc = params[2]
-    rt = params[3]
-    a  = params[4]
-    b  = params[5]
+def Support(rc,rt,a,b):
     if rc <= 0 : return False
     if rt <= rc : return False
     if a <= 0 : return False
     if b <= 0 : return False
+    if a > 10.0 or b > 10.0 : return False   # To avoid overflows
     return True
 
+
 @jit
-def Kernel(r,params):
-    rc = params[2]
-    rt = params[3]
-    a  = params[4]
-    b  = params[5]
+def Kernel(r,rc,rt,a,b):
     x  = (1.0 +  (r/rc)**(1./a))**-a
     y  = (1.0 + (rt/rc)**(1./a))**-a
     z  = (x-y + 0j)**b
     return z.real
 
+@jit
+def Kernel1(r,rc,rt,a,b):
+    x  = (1.0 +  (r/rc)**(1./a))**-a
+    y  = (1.0 + (rt/rc)**(1./a))**-a
+    z  = (x-y+0j)**b
+    return z.real
+
 def cdf(r,params,Rm):
-    return NormCte(params,r)/NormCte(params,Rm)
+    return NormCte(np.array([params,r]))/NormCte(np.array([params,Rm]))
 
 
 def Number(r,params,Rm,Nstr):
-    cte = NormCte(params,Rm)
-    Num = np.vectorize(lambda y: integrate.quad(lambda x:x*Kernel(x,params)/cte,lo,y,
+    rc  = params[2]
+    rt  = params[3]
+    a   = params[4]
+    b   = params[5]
+
+    # Normalisation constant
+    if rt < Rm:
+        up = rt
+    else:
+        up = Rm
+
+    cte = NormCte(np.array([rc,rt,a,b,up]))
+    Num = np.vectorize(lambda y: integrate.quad(lambda x:x*Kernel1(x,rc,rt,a,b)/cte,lo,y,
                 epsabs=1.49e-03, epsrel=1.49e-03,limit=1000)[0])
     return Nstr*Num(r)
 
 
 def Density(r,params,Rm):
-    cte = NormCte(params,Rm)
-    Den = np.vectorize(lambda x:Kernel(x,params)/cte)
+    rc  = params[2]
+    rt  = params[3]
+    a   = params[4]
+    b   = params[5]
+
+    # Normalisation constant
+    if rt < Rm:
+        up = rt
+    else:
+        up = Rm
+
+    cte = NormCte(np.array([rc,rt,a,b,up]))
+    Den = np.vectorize(lambda x:Kernel1(x,rc,rt,a,b)/cte)
     return Den(r)
 
-def NormCte(params,Rm):
-    if params[1] < Rm :
-        up = params[1]
-    else :
-        up = Rm
-    cte = integrate.quad(lambda x:x*Kernel(x,params),lo,up,
+
+def NormCte(z):
+    cte = integrate.quad(lambda x:x*Kernel1(x,z[0],z[1],z[2],z[3]),lo,z[4],
                     epsabs=1.49e-03, epsrel=1.49e-03,limit=1000)[0]
     return cte
-
 @jit
 def LikeField(r,rm):
     return 2.*r/rm**2
@@ -83,8 +102,8 @@ class Module:
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
         self.Prior_2    = st.halfcauchy(loc=0,scale=hyp[2])
         self.Prior_3    = st.halfcauchy(loc=0,scale=hyp[3])
-        self.Prior_4    = st.uniform(loc=0.01,scale=hyp[4])
-        self.Prior_5    = st.uniform(loc=0.01,scale=hyp[5])
+        self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[4])
+        self.Prior_5    = st.halfcauchy(loc=0.01,scale=hyp[5])
         print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):
@@ -97,10 +116,12 @@ class Module:
 
     def LogLike(self,params,ndim,nparams):
         ctr= params[:2]
-        rc = params[0]
-        rt = params[1]
+        rc = params[2]
+        rt = params[3]
+        a  = params[4]
+        b  = params[5]
          #----- Checks if parameters' values are in the ranges
-        if not Support(params) : 
+        if not Support(rc,rt,a,b) : 
             return -1e50
 
         #------- Obtains radii and angles ---------
@@ -109,14 +130,19 @@ class Module:
         ############### Radial likelihood ###################
         # Computes likelihood
         lf = (1.0-self.pro)*LikeField(radii,self.Rmax)
-        lk = radii*(self.pro)*Kernel(radii,params)
+        lk = radii*(self.pro)*Kernel(radii,rc,rt,a,b)
 
         # In king's profile no objects is larger than tidal radius
         idBad = np.where(radii > rt)[0]
         lk[idBad] = 0.0
 
         # Normalisation constant
-        cte = NormCte(params,self.Rmax)
+        if rt < self.Rmax:
+            up = rt
+        else:
+            up = self.Rmax
+
+        cte = NormCte(np.array([rc,rt,a,b,up]))
 
         k = 1.0/cte
 
