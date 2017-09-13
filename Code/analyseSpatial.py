@@ -28,7 +28,7 @@ dir_  = os.path.expanduser('~') +"/PyAspidistra/"
 # exte  = str(sys.argv[1])
 
 models = np.array(["EFF","GDP","GKing","King","OGKing","RGDP"])
-Rcuts  = [7,20]
+Rcuts  = [11]
 extes  = ["Ctr","Ell","Seg"]
 
 dir_out = dir_+'Analysis/BayesFactors/'
@@ -61,15 +61,14 @@ for e,exte in enumerate(extes):
 		#---- parameters ac,dc,rc,rt,alpha,beta,gamma ----------
 		pnames     = np.array(["$\\alpha_c$ [$^\circ$]","$\delta_c$ [$^\circ$]","$\phi$ [rad]",
 					"$r_{ca}$ [pc]","$r_{ta}$ [pc]","$r_{cb}$ [pc]","$r_{tb}$ [pc]","$\\alpha$",
-					"$\\beta$","$\gamma$"])
-		idx_EFF    =    [1, 1, 1, 1, 0, 1, 0, 0, 0, 1]
-		idx_GDP    =    [1, 1, 1, 1, 0, 1, 0, 1, 1, 1]
-		idx_GKing  =    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0]
-		idx_King   =    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0]
-		idx_OGKing =    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0]
-		idx_RGDP   =    [1, 1, 1, 1, 0, 1, 0, 1, 1, 0]
+					"$\\beta$","$\gamma$","$\epsilon_{rc}$","$\epsilon_{rt}$"])
+		idx_EFF    =    [1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0]
+		idx_GDP    =    [1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0]
+		idx_GKing  =    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1]
+		idx_King   =    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1]
+		idx_OGKing =    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1]
+		idx_RGDP   =    [1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0]
 		idx_MODS   = np.vstack([idx_EFF,idx_GDP,idx_GKing,idx_King,idx_OGKing,idx_RGDP])
-		ideps      = idx_MODS[:,5:7]
 
 
 
@@ -79,13 +78,13 @@ for e,exte in enumerate(extes):
 		#---- parameters ac,dc,rc,rt,alpha,beta,gamma ----------
 		pnames     = np.array(["$\\alpha_c$ [$^\circ$]","$\delta_c$ [$^\circ$]","$\phi$ [rad]",
 						"$r_{ca}$ [pc]","$r_{ta}$ [pc]","$r_{cb}$ [pc]","$r_{tb}$ [pc]",
-						"$\\alpha$","$\\beta$","$\\gamma$","$\kappa$ [pc mag$^{-1}$]"])
-		idx_EFF    =    [1, 1 ,1, 1, 0, 1, 0, 0, 0, 1, 1]
-		idx_GDP    =    [1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1]
-		idx_GKing  =    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1]
-		idx_King   =    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1]
-		idx_OGKing =    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1]
-		idx_RGDP   =    [1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1]
+						"$\\alpha$","$\\beta$","$\\gamma$","$\kappa$ [pc mag$^{-1}$]","$\epsilon_{rc}$","$\epsilon_{rt}$"])
+		idx_EFF    =    [1, 1 ,1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0]
+		idx_GDP    =    [1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0]
+		idx_GKing  =    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
+		idx_King   =    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1]
+		idx_OGKing =    [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1]
+		idx_RGDP   =    [1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0]
 		idx_MODS   = np.vstack([idx_EFF,idx_GDP,idx_GKing,idx_King,idx_OGKing,idx_RGDP])
 
 
@@ -94,7 +93,6 @@ for e,exte in enumerate(extes):
 		print("Available ones are: None, Centre (Ctr), Elliptic (Ell), and Segregated (Seg")
 		sys.exit()
 
-	EPS = np.nan*np.ones((len(models),len(Rcuts),2))
 	for r,Rcut in enumerate(Rcuts):
 
 		############## Read evidences #########################
@@ -125,12 +123,7 @@ for e,exte in enumerate(extes):
 		for i,model in enumerate(models):
 			fevid  = dir_+'Analysis/'+dir_ext+"/"+model+'_'+str(Rcut)+"/"+model+"_map.txt"
 			MAPs[i,np.where(idx_MODS[i]==1)[0]] = np.array(pn.read_csv(fevid,
-				nrows=1,delim_whitespace=True,header=None))[0]
-
-			#------ reads ellipticities ---------
-			if exte == "Ell":
-				EPS[i,r,np.where(ideps[i]==1)[0]] = np.array(pn.read_csv(fevid,
-					nrows=1,delim_whitespace=True,header=None,skiprows=1))[0]
+				nrows=1,delim_whitespace=True,header=None))
 
 			#------ reads numbers ---------
 			if model in ["GKing","King","OGKing"]:
@@ -146,14 +139,6 @@ for e,exte in enumerate(extes):
 		# -------- Writes MAPS to Latex-------------------------
 		fout = dir_out+"MAPs_"+dir_ext+"_"+str(Rcut)+".txt"
 		maps.to_latex(fout,index_names=True,float_format=my_format1,escape=False)
-
-	# ------- Writes Ellipticities to latex ---------------
-	epsnames = ["$\epsilon_{rc;3^\circ}$","$\epsilon_{rt;3^\circ}$","$\epsilon_{rc;6.5^\circ}$","$\epsilon_{rt;6.5^\circ}$"]
-	if exte == "Ell":
-		epsilons = pn.DataFrame(EPS.reshape(len(models),len(Rcuts)*2),columns=epsnames)
-		epsilons = epsilons.rename(lambda x:models[x])
-		fout = dir_out+"Epsilons_"+dir_ext+".txt"
-		epsilons.to_latex(fout,index_names=True,float_format=my_format1,escape=False)
 
 
 evs = evs.reshape((2,-1))
@@ -186,7 +171,13 @@ for i,model in enumerate(["GKing","King","OGKing"]):
 	pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 	plt.close()
 	pdf.close()
-print Nrtm
+
+df = pn.DataFrame(Nrtm.reshape(len(extes),3),columns=["GKing","King","OGKing"])
+df = df.rename(lambda x:extes[x])
+
+# -------- Writes Bayes factors -------------------------
+fout = dir_out+"Nsys_"+str(Rcut)+".txt"
+df.to_latex(fout,index_names=True,float_format=my_format1,multirow=True)
 
 
 

@@ -9,10 +9,13 @@ import scipy.integrate as integrate
 print "OGKing Segregated imported!"
 lo     = 1e-5
 
+a  = 0.46
+b  = 1.48
+
 @jit
 def Support(rca,rta,rcb,rtb):
-    if rca <= 0 : return False
-    if rcb <= 0 : return False
+    # if rca <= 0 : return False
+    # if rcb <= 0 : return False
     if rcb > rca: return False
     if rta <= rca : return False
     if rtb <= rcb : return False
@@ -21,8 +24,6 @@ def Support(rca,rta,rcb,rtb):
 
 @jit
 def Kernel(r,rc,rt):
-    a  = 0.45
-    b  = 1.18
     x  = (1.0 +  (r/rc)**(1.0/a))**(-a)
     y  = (1.0 + (rt/rc)**(1.0/a))**(-a)
     z  = (x-y + 0j)**b
@@ -30,8 +31,6 @@ def Kernel(r,rc,rt):
 
 @jit
 def Kernel1(r,rc,rt):
-    a  = 0.45
-    b  = 1.18
     x  = (1.0 +  (r/rc)**(1./a))**-a
     y  = (1.0 + (rt/rc)**(1./a))**-a
     z  = (x-y + 0j)**b
@@ -116,10 +115,10 @@ class Module:
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
         self.Prior_2    = st.uniform(loc=-0.5*np.pi,scale=np.pi)
-        self.Prior_3    = st.halfcauchy(loc=0,scale=hyp[2])
-        self.Prior_4    = st.halfcauchy(loc=0,scale=hyp[3])
-        self.Prior_5    = st.halfcauchy(loc=0,scale=hyp[2])
-        self.Prior_6    = st.halfcauchy(loc=0,scale=hyp[3])
+        self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[2])
+        self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[3])
+        self.Prior_5    = st.halfcauchy(loc=0.01,scale=hyp[2])
+        self.Prior_6    = st.halfcauchy(loc=0.01,scale=hyp[3])
         self.Prior_7    = st.norm(loc=hyp[4],scale=hyp[5])
 
         print("Module Initialized")

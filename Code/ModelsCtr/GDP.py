@@ -88,9 +88,9 @@ class Module:
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
         self.Prior_2    = st.halfcauchy(loc=0.01,scale=hyp[2])
-        self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[3])
-        self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[4])
-        self.Prior_5    = st.halfcauchy(loc=0.0,scale=hyp[5])
+        self.Prior_3    = st.truncexpon(b=hyp[3],loc=0.01,scale=hyp[4])
+        self.Prior_4    = st.truncexpon(b=hyp[3],loc=0.01,scale=hyp[4])
+        self.Prior_5    = st.truncexpon(b=2.0,loc=0.01,scale=hyp[4])
         print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):
@@ -109,8 +109,8 @@ class Module:
         b  = params[4]
         g  = params[5]
          #----- Checks if parameters' values are in the ranges
-        if not Support(rc,a,b,g) : 
-            return -1e50
+        # if not Support(rc,a,b,g) : 
+        #     return -1e50
 
         #------- Obtains radii and angles ---------
         radii,theta    = Deg2pc(self.cdts,ctr,self.Dist)

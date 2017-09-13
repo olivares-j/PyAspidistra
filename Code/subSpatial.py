@@ -3,10 +3,8 @@
 DIR     = /pcdisk/boneym5/jolivares/PyAspidistra/Code/
 DIR_LOG = $(DIR)/Log
 
+RCUT = 11.5
 
-#EXT  = Ctr
-#EXT  = Ell
-EXT  = Seg
 
 notification            = Error
 notify_user 	        = avijer@gmail.com
@@ -18,37 +16,56 @@ initialdir              = $(DIR)
 should_transfer_files   = yes
 when_to_transfer_output = on_exit
 
+requirements            = (Machine == "kool.cab.inta-csic.es")
+
 
 output                  = $(DIR_LOG)/$(cluster)_$(process).out
 error                   = $(DIR_LOG)/$(cluster)_$(process).err
 log                     = $(DIR_LOG)/$(cluster)_$(process).log
 
-RCUT = 7
+EXT  = Ctr
 
-#arguments               = EFF $(RCUT) $(EXT) 
-#queue
-#arguments               = GDP $(RCUT) $(EXT) 
-#queue
+arguments               = EFF $(RCUT) $(EXT) 
+queue
+arguments               = GDP $(RCUT) $(EXT) 
+queue
 arguments               = GKing $(RCUT) $(EXT) 
 queue
 arguments               = King $(RCUT) $(EXT) 
 queue
 arguments               = OGKing $(RCUT) $(EXT) 
 queue
-#arguments               = RGDP $(RCUT) $(EXT) 
-#queue
+arguments               = RGDP $(RCUT) $(EXT) 
+queue
 
-RCUT = 20
 
-#arguments               = EFF $(RCUT) $(EXT) 
-#queue
-#arguments               = GDP $(RCUT) $(EXT) 
-#queue
+EXT  = Ell
+arguments               = EFF $(RCUT) $(EXT) 
+queue
+arguments               = GDP $(RCUT) $(EXT) 
+queue
 arguments               = GKing $(RCUT) $(EXT) 
 queue
 arguments               = King $(RCUT) $(EXT) 
 queue
 arguments               = OGKing $(RCUT) $(EXT) 
 queue
-#arguments               = RGDP $(RCUT) $(EXT) 
-#queue
+arguments               = RGDP $(RCUT) $(EXT) 
+queue
+
+
+EXT  = Seg
+
+arguments               = EFF $(RCUT) $(EXT) 
+queue
+arguments               = GDP $(RCUT) $(EXT) 
+queue
+arguments               = GKing $(RCUT) $(EXT) 
+queue
+arguments               = King $(RCUT) $(EXT) 
+queue
+arguments               = OGKing $(RCUT) $(EXT) 
+queue
+arguments               = RGDP $(RCUT) $(EXT) 
+queue
+

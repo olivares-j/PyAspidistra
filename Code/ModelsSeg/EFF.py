@@ -8,12 +8,8 @@ from pandas import cut, value_counts
 print "EFF Segregated imported!"
 
 @jit
-def Support(rca,rcb,g):
-    if rca <= 0 : return False
-    if rcb <= 0 : return False
+def Support(rca,rcb):
     if rcb > rca: return False
-    if  g <= 2.0 : return False
-    if  g > 100.0 : return False
     return True
 
 @jit
@@ -93,8 +89,8 @@ class Module:
         self.Prior_2    = st.uniform(loc=-0.5*np.pi,scale=np.pi)
         self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[2])
         self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[2])
-        self.Prior_5    = st.halfcauchy(loc=2.01,scale=hyp[3])
-        self.Prior_6    = st.norm(loc=hyp[4],scale=hyp[5])
+        self.Prior_5    = st.truncexpon(b=hyp[3],loc=2.01,scale=hyp[4])
+        self.Prior_6    = st.norm(loc=hyp[5],scale=hyp[6])
         print "Module Initialized"
 
     def Priors(self,params, ndim, nparams):
@@ -115,7 +111,7 @@ class Module:
         g   = params[5]
         slp = params[6]
         #----- Checks if parameters' values are in the ranges
-        if not Support(rca,rcb,g):
+        if not Support(rca,rcb):
             return -1e50
 
         #------- Obtains radii and angles ---------

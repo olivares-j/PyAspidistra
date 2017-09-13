@@ -7,11 +7,13 @@ from pandas import cut, value_counts
 import scipy.integrate as integrate
 
 print "OGKing Centre imported!"
-lo     = 1e-5
+lo = 1e-5
+a  = 0.46
+b  = 1.48
 
 @jit
 def Support(rc,rt):
-    if rc <= 0 : return False
+    # if rc <= 0 : return False
     if rt <= rc : return False
     return True
 
@@ -19,8 +21,6 @@ def Support(rc,rt):
 def Kernel(r,params):
     rc = params[2]
     rt = params[3]
-    a  = 0.32
-    b  = 1.16
     x  = (1.0 +  (r/rc)**(1./a))**-a
     y  = (1.0 + (rt/rc)**(1./a))**-a
     return (x-y)**b
@@ -76,8 +76,8 @@ class Module:
         #-------------- priors ----------------
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
-        self.Prior_2    = st.halfcauchy(loc=0,scale=hyp[2])
-        self.Prior_3    = st.halfcauchy(loc=0,scale=hyp[3])
+        self.Prior_2    = st.halfcauchy(loc=0.01,scale=hyp[2])
+        self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[3])
         print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):

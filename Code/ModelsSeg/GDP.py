@@ -11,14 +11,14 @@ print "GDP Segregated imported!"
 
 @jit
 def Support(rca,rcb,a,b,g):
-    if rca <= 0 : return False
-    if rcb <= 0 : return False
+    # if rca <= 0 : return False
+    # if rcb <= 0 : return False
     if rcb > rca: return False
-    if a   <= 0 : return False
-    if b   <  0 : return False
-    if g   <  0 : return False
-    if g   >= 2 : return False
-    if a > 100.0 or b > 100.0 : return False   # To avoid overflows
+    # if a   <= 0 : return False
+    # if b   <  0 : return False
+    # if g   <  0 : return False
+    # if g   >= 2 : return False
+    # if a > 100.0 or b > 100.0 : return False   # To avoid overflows
     return True
 
 @jit
@@ -120,10 +120,10 @@ class Module:
         self.Prior_2    = st.uniform(loc=-0.5*np.pi,scale=np.pi)
         self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[2])
         self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[2])
-        self.Prior_5    = st.halfcauchy(loc=0.01,scale=hyp[3])
-        self.Prior_6    = st.halfcauchy(loc=0.01,scale=hyp[4])
-        self.Prior_7    = st.halfcauchy(loc=0.01,scale=hyp[5])
-        self.Prior_8    = st.norm(loc=hyp[6],scale=hyp[7])
+        self.Prior_5    = st.truncexpon(b=hyp[3],loc=0.01,scale=hyp[4])
+        self.Prior_6    = st.truncexpon(b=hyp[3],loc=0.01,scale=hyp[4])
+        self.Prior_7    = st.truncexpon(b=2.0,loc=0.01,scale=hyp[4])
+        self.Prior_8    = st.norm(loc=hyp[5],scale=hyp[6])
         print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):

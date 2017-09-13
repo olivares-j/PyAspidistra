@@ -9,7 +9,7 @@ print "King Centre imported!"
 
 @jit
 def Support(rc,rt):
-    if rc <= 0  : return False
+    # if rc <= 0  : return False
     if rt <= rc : return False
     return True
 
@@ -77,8 +77,8 @@ class Module:
         #-------------- priors ----------------
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
-        self.Prior_2    = st.halfcauchy(loc=0,scale=hyp[2])
-        self.Prior_3    = st.halfcauchy(loc=0,scale=hyp[3])
+        self.Prior_2    = st.halfcauchy(loc=0.01,scale=hyp[2])
+        self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[3])
         print "Module Initialized"
 
     def Priors(self,params, ndim, nparams):

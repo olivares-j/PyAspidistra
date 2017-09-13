@@ -13,8 +13,7 @@ print "RGDP Centre imported!"
 def Support(rc,a,b):
     if rc <= 0 : return False
     if a  <= 0 : return False
-    if b  <  0 : return False
-    if a > 100.0 or b > 100.0 : return False
+    if b  <=  0 : return False
     return True
 
 @jit
@@ -78,9 +77,9 @@ class Module:
         #-------------- priors ----------------
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
-        self.Prior_2    = st.halfcauchy(loc=0,scale=hyp[2])
-        self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[3])
-        self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[4])
+        self.Prior_2    = st.halfcauchy(loc=0.01,scale=hyp[2])
+        self.Prior_3    = st.truncexpon(b=hyp[3],loc=0.01,scale=hyp[4])
+        self.Prior_4    = st.truncexpon(b=hyp[3],loc=0.01,scale=hyp[4])
         print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):
@@ -96,8 +95,8 @@ class Module:
         a  = params[3]
         b  = params[4]
          #----- Checks if parameters' values are in the ranges
-        if not Support(rc,a,b) : 
-            return -1e50
+        # if not Support(rc,a,b) : 
+        #     return -1e50
 
         #------- Obtains radii and angles ---------
         radii,theta    = Deg2pc(self.cdts,ctr,self.Dist)

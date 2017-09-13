@@ -17,21 +17,27 @@ from Functions import Deg2pc
 dir_   = os.path.expanduser('~') +"/PyAspidistra/"
 ftycho = "/pcdisk/kool5/scratch-lsb/DANCe-R2/DANCe-Pleiades-Tycho-R2.fits"
 fdance = "/pcdisk/kool5/scratch-lsb/DANCe-R2/DANCe-Pleiades-R2-ICRS.fits"
-fout   = dir_+'Analysis/RadiiDistribution_Tycho+DANCe.pdf'
+fout   = dir_+'Analysis/RadiiDistribution_Tycho+DANCe_Jmag.pdf'
 
-Dist    = 136.0
+
+Dist    = 134.4
 centre  = [56.65,24.13]
 rc0     = 6 
 rc1     = 11.5 # pc
+
+d2pc    = (180.0/np.pi)*Dist
 
 # reads fits files -----
 tycho = Table(fits.getdata(ftycho,1))
 dance = Table(fits.getdata(fdance,1))
 
+# print tycho.colnames
+# sys.exit()
+
 
 # extracts coordinates
-cdtsT = np.c_[tycho['RAJ2000'],tycho['DEJ2000']]
-cdtsD = np.c_[dance['RA'],dance['Dec']]
+cdtsT = np.c_[tycho['RAJ2000'],tycho['DEJ2000'],tycho['Jmag']]
+cdtsD = np.c_[dance['RA'],dance['Dec'],dance["J"]]
 cdts  = np.vstack([cdtsT,cdtsD])
 #---- removes duplicateds --------
 sumc  = np.sum(cdts[:,:2],axis=1)
@@ -41,75 +47,76 @@ sumc  = np.sum(cdts[:,:2],axis=1)
 if len(sumc) != len(list(set(sumc))):
 	sys.exit("Duplicated entries in Coordinates!")
 
-# transform to radii and position angles
-cdtsU       = np.c_[np.random.uniform(centre[0]-rc0,centre[0]+rc0,int(2e6)),
-					np.random.uniform(centre[1]-rc0,centre[1]+rc0,int(2e6))]
-
-
-rad_us,the_us = Deg2pc(cdtsU,centre,Dist)
-idc = np.where(rad_us < rc1)[0]
-
-rad_uc = rad_us[idc]
-the_uc = the_us[idc]
+#----------- Uniform to compare with -----------
+# cdtsU       = np.c_[np.random.uniform(centre[0]-rc0,centre[0]+rc0,int(2e6)),
+# 					np.random.uniform(centre[1]-rc0,centre[1]+rc0,int(2e6))]
+# rad_us,the_us = Deg2pc(cdtsU,centre,Dist)
+# idc = np.where(rad_us < rc1)[0]
+# rad_us = rad_us[idc]
+# the_us = the_us[idc]
 
 
 
-rad_T,the_T = Deg2pc(cdtsT,centre,Dist)
-rad_D,the_D = Deg2pc(cdtsD,centre,Dist)
 radii,theta = Deg2pc(cdts,centre,Dist)
 
-#----- plot distributions ------
+id_14 = np.where(cdts[:,2] <= 14)[0]
+id_18 = np.where(cdts[:,2] <= 18)[0]
+id_19 = np.where(cdts[:,2] <= 19)[0]
+id_20 = np.where(cdts[:,2] <= 20)[0]
+
+
+rad_14,the_14 = Deg2pc(cdts[id_14,:],centre,Dist)
+rad_18,the_18 = Deg2pc(cdts[id_18,:],centre,Dist)
+rad_19,the_19 = Deg2pc(cdts[id_19,:],centre,Dist)
+rad_20,the_20 = Deg2pc(cdts[id_20,:],centre,Dist)
 
 pdf = PdfPages(fout)
 plt.figure()
-n, bins, patches = plt.hist(the_us,100, normed=1,lw=2,alpha=0.8,
-	histtype='step',label="Uniform Square ($\pm$"+str(rc0)+"$^\circ$)")
-n, bins, patches = plt.hist(the_uc,100, normed=1,lw=2,alpha=0.8,
-	histtype='step',label="Uniform Circle ("+str(rc1)+" pc)")
-n, bins, patches = plt.hist(the_T,100, normed=1,lw=2,alpha=0.8,
-	histtype='step',label="Tycho")
-n, bins, patches = plt.hist(the_D,100, normed=1,lw=2,alpha=0.8,
-	histtype='step',label="DANCe")
-n, bins, patches = plt.hist(theta,100, normed=1,lw=2,alpha=0.8,ec="black",
-	histtype='step',label="DANCe+Tycho")
+# n, bins, patches = plt.hist(the_us,100, normed=1,lw=1,alpha=0.8,ec="blue",
+# 	histtype='step',label="Synthetic")
+n, bins, patches = plt.hist(the_14,100, normed=1,lw=2,alpha=0.8,
+	histtype='step',label="J<14")
+n, bins, patches = plt.hist(the_18,100, normed=1,lw=2,alpha=0.8,
+	histtype='step',label="J<18")
+n, bins, patches = plt.hist(the_19,100, normed=1,lw=2,alpha=0.8,
+	histtype='step',label="J<19")
+n, bins, patches = plt.hist(the_20,100, normed=1,lw=2,alpha=0.8,
+	histtype='step',label="J<20")
+# n, bins, patches = plt.hist(theta,100, normed=1, lw=2,alpha=0.8,ec="black",
+# 	histtype='step',label="All")
 plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
-           ncol=3, mode="expand", borderaxespad=0.)
-plt.xlabel('Position Angle [radians]')
-plt.ylabel('Density [stars $\cdot$ radians$^{-1}$]')
+           ncol=4, mode="expand", borderaxespad=0.)
+# plt.vlines([6,11.5],0,1.1*np.max(n),colors="grey")
+plt.xlabel('Position Angle [rad]')
+plt.ylabel('Density [stars $\cdot$ rad$^{-1}$]')
 pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 plt.close()
-plt.figure()
-n, bins, patches = plt.hist(rad_us,100, normed=1, lw=2,alpha=0.8,
-	histtype='step',label="Uniform Square ($\pm$"+str(rc0)+"$^\circ$)")
-n, bins, patches = plt.hist(rad_uc,100, normed=1, lw=2,alpha=0.8,
-	histtype='step',label="Uniform Circle ("+str(rc1)+" pc)")
-n, bins, patches = plt.hist(rad_T,100, normed=1, lw=2,alpha=0.8,
-	histtype='step',label="Tycho")
-n, bins, patches = plt.hist(rad_D,100, normed=1,lw=2,alpha=0.8,
-	histtype='step',label="DANCe")
-n, bins, patches = plt.hist(radii,100, normed=1, lw=2,alpha=0.8,ec="black",
-	histtype='step',label="DANCe+Tycho")
+
+
+# n, bins, patches = plt.hist(rad_us,150, normed=1,lw=2,alpha=0.8,ec="blue",
+# 	histtype='step',label="Synthetic")
+n, bins, patches = plt.hist(rad_14,150, normed=1,lw=2,alpha=0.8,
+	histtype='step',label="J<14")
+n, bins, patches = plt.hist(rad_18,150, normed=1, lw=2,alpha=0.8,
+	histtype='step',label="J<18")
+n, bins, patches = plt.hist(rad_19,150, normed=1,lw=2,alpha=0.8,
+	histtype='step',label="J<19")
+n, bins, patches = plt.hist(rad_20,150, normed=1,lw=2,alpha=0.8,
+	histtype='step',label="J<20")
+# n, bins, patches = plt.hist(radii,150, normed=1, lw=2,alpha=0.8,ec="black",
+# 	histtype='step',label="All")
 plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
-           ncol=3, mode="expand", borderaxespad=0.)
+           ncol=4, mode="expand", borderaxespad=0.)
+plt.vlines([rc1],0,0.5,colors="grey")
+plt.ylim(0.01,0.2)
+plt.xlim(0.0,15.0)
 plt.xlabel('Radius [pc]')
-plt.ylabel('Density [stars $\cdot$ pc$^{-1}$]')
-pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
-plt.close()
-plt.figure()
-n, bins, patches = plt.hist(rad_T,100, normed=1, lw=2,alpha=0.8,
-	histtype='step',label="Tycho")
-n, bins, patches = plt.hist(rad_D,100, normed=1,lw=2,alpha=0.8,
-	histtype='step',label="DANCe")
-n, bins, patches = plt.hist(radii,100, normed=1, lw=2,alpha=0.8,ec="black",
-	histtype='step',label="DANCe+Tycho")
-plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
-           ncol=3, mode="expand", borderaxespad=0.)
-plt.vlines([6,11.5],0,1.1*np.max(n),colors="grey")
-plt.xlabel('Radius [pc]')
-plt.ylabel('Density [stars $\cdot$ pc$^{-1}$]')
+plt.ylabel('Density [stars pc$^{-1}$]')
+plt.yscale("log")
 pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 plt.close()
 pdf.close()
+
 
 
 

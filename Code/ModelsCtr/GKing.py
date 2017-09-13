@@ -12,11 +12,10 @@ lo     = 1e-5
 
 @jit
 def Support(rc,rt,a,b):
-    if rc <= 0 : return False
+    # if rc <= 0 : return False
     if rt <= rc : return False
-    if a <= 0 : return False
-    if b <= 0 : return False
-    if a > 10.0 or b > 10.0 : return False   # To avoid overflows
+    # if a <= 0 : return False
+    # if b <= 0 : return False
     return True
 
 
@@ -100,10 +99,10 @@ class Module:
         #-------------- priors ----------------
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
-        self.Prior_2    = st.halfcauchy(loc=0,scale=hyp[2])
-        self.Prior_3    = st.halfcauchy(loc=0,scale=hyp[3])
-        self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[4])
-        self.Prior_5    = st.halfcauchy(loc=0.01,scale=hyp[5])
+        self.Prior_2    = st.halfcauchy(loc=0.01,scale=hyp[2])
+        self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[3])
+        self.Prior_4    = st.truncexpon(b=hyp[4],loc=0.01,scale=hyp[5])
+        self.Prior_5    = st.truncexpon(b=hyp[4],loc=0.01,scale=hyp[5])
         print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):

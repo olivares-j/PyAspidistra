@@ -12,15 +12,15 @@ lo     = 1e-5
 
 @jit
 def Support(rca,rta,rcb,rtb,a,b):
-    if rca <= 0 : return False
-    if rcb <= 0 : return False
+    # if rca <= 0 : return False
+    # if rcb <= 0 : return False
     if rcb > rca: return False
     if rta <= rca : return False
     if rtb <= rcb : return False
     if rtb > rta: return False
-    if a <= 0 : return False
-    if b <= 0 : return False
-    if a > 10.0 or b > 10.0 : return False   # To avoid overflows
+    # if a <= 0 : return False
+    # if b <= 0 : return False
+    # if a > 10.0 or b > 10.0 : return False   # To avoid overflows
     return True
 
 
@@ -94,12 +94,12 @@ class Module:
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
         self.Prior_2    = st.uniform(loc=-0.5*np.pi,scale=np.pi)
-        self.Prior_3    = st.halfcauchy(loc=0,scale=hyp[2])
-        self.Prior_4    = st.halfcauchy(loc=0,scale=hyp[3])
-        self.Prior_5    = st.halfcauchy(loc=0,scale=hyp[2])
-        self.Prior_6    = st.halfcauchy(loc=0,scale=hyp[3])
-        self.Prior_7    = st.halfcauchy(loc=0.01,scale=hyp[4])
-        self.Prior_8    = st.halfcauchy(loc=0.01,scale=hyp[5])
+        self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[2])
+        self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[3])
+        self.Prior_5    = st.halfcauchy(loc=0.01,scale=hyp[2])
+        self.Prior_6    = st.halfcauchy(loc=0.01,scale=hyp[3])
+        self.Prior_7    = st.truncexpon(b=hyp[4],loc=0.01,scale=hyp[5])
+        self.Prior_8    = st.truncexpon(b=hyp[4],loc=0.01,scale=hyp[5])
         print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):
@@ -139,8 +139,7 @@ class Module:
         lk = radii*(self.pro)*Kernel(radii,rcs,rts,a,b)
 
         # In king's profile no objects is larger than tidal radius
-        idBad = np.where(radii > rts)[0]
-        lk[idBad] = 0.0
+        lk[np.where(radii > rts)[0]] = 0.0
 
         # Normalisation constant
         ups      = self.Rmax*np.ones_like(rts)
@@ -155,6 +154,8 @@ class Module:
         k = 1.0/cte
 
         llike_r  = np.sum(np.log((k*lk + lf)))
+        if np.isnan(llike_r):
+            return -1e-50
         ##################### POISSON ###################################
         quarter  = cut(theta,bins=self.quadrants,include_lowest=True)
         counts   = value_counts(quarter)
@@ -163,12 +164,6 @@ class Module:
 
         llike = llike_t + llike_r
         # print(llike)
-        # if not np.isfinite(llike):
-        #     ids = np.where(np.isnan(llike))[0]
-        #     print cte[ids],rcs[ids],rts[ids],a,b,ups[ids]
-        #     sys.exit()
-        #     return -1e50
-        
         return llike
 
 

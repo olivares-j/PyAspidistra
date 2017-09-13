@@ -29,7 +29,7 @@ if nargs == 4:
 if nargs == 3:
 	na = 1
 model = str(sys.argv[1-na])
-Rcut  = int(sys.argv[2-na])
+Rcut  = float(sys.argv[2-na])
 exte  = str(sys.argv[3-na])
 
 if exte == "None":
@@ -55,53 +55,54 @@ mod = importlib.import_module(dext+"."+model)
 
 ############## Directory of outputs #########################
 if real :
-	dir_out  = dir_+'Analysis/'+fext+model+'_'+str(Rcut)
+	dir_out  = dir_+'Analysis/'+fext+model+'_'+str(int(Rcut))
 else:
-	dir_out  = dir_+'Analysis/Synthetic/'+fext+model+'_'+str(Rcut)+'_'+str(Ntot)
+	dir_out  = dir_+'Analysis/Synthetic/'+fext+model+'_'+str(int(Rcut))+'_'+str(Ntot)
 	fsyn     = dir_out+'/2-data.csv'
 if not os.path.exists(dir_out): os.mkdir(dir_out)
 ################################### MODEL ######################################################
+texp = 100.0 # truncation of exponential prior for exponents
+sexp = 1.0  # scale of  ""      """
+src  = 1.0  # scale of half-cauchy for core radius
+srt  = 10.0 #   ""        """            tidal radius
+
+
 if model == "EFF":
 	if exte == "None" or exte =="Ctr":
 		#----------------------------------
 		namepar = ["$r_c$ [pc]","$\gamma$"]
 		params  = [2.0,3.0]
-		hyp     = np.array([10,3])
-		rng     = [[0,6],[2,6]]
+		rng     = [[0,4],[2,4]]
 	if exte == "Ell" or exte =="Seg":
 		#--------- Initial parameters --------------
 		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{cb}$ [pc]","$\gamma$"]
 		params  = [np.pi/4,2.0,2.0,0.0]
-		hyp     = np.array([10,1])
-		rng     = [[-0.5*np.pi,0.5*np.pi],[0,6],[0,6],[2,6]]
+		rng     = [[-0.5*np.pi,0.5*np.pi],[0,4],[0,4],[2,4]]
 		id_rc   = [3,4]
+	hyp     = np.array([src,texp,sexp])
 
-if model == "King":
+if model == "GDP":
 	if exte == "None" or exte =="Ctr":
-		#--------- Initial parameters --------------
-		namepar = ["$r_c$ [pc]", "$r_t$ [pc]"]
-		params  = [2.0,20.0]
-		hyp     = np.array([10,10])
-		rng     = [[0,5],[0,50]]
-		idrt    = 3
+	#--------- Initial parameters --------------
+		namepar = ["$r_c$ [pc]","$\\alpha$","$\\beta$","$\gamma$"]
+		params  = [2.0,0.5,2.0,0.1]
+		rng     = [[0,10],[0,2],[0,10],[0,1]]
+
 	if exte == "Ell" or exte =="Seg":
 		#--------- Initial parameters --------------
-		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]",
-					 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
-		params  = [np.pi/4,2.0,20.0,2.0,20.0]
-		hyp     = np.array([10,10])
-		rng     = [[-0.5*np.pi,0.5*np.pi],[0,5],[0,50],[0,5],[0,50]]
-		id_rc   = [3,5]
-		idrt    = 4
-
+		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{cb}$ [pc]",
+					"$\\alpha$","$\\beta$","$\gamma$"]
+		params  = [np.pi/4,2.0,2.0,0.5,2.0,0.0]
+		rng     = [[-0.5*np.pi,0.5*np.pi],[0,10],[0,10],[0,2],[0,10],[0,2]]
+		id_rc   = [3,4]
+	hyp     = np.array([src,texp,sexp])
 
 if model == "GKing":
 	if exte == "None" or exte =="Ctr":
 		#--------- Initial parameters --------------
 		namepar = ["$r_c$ [pc]","$r_t$ [pc]","$\\alpha$","$\\beta$"]
 		params  = [2.0,20.0,0.5,2.0]
-		hyp     = np.array([10,10,1,1])
-		rng     = [[0,20],[10,30],[0,5],[0,5]]
+		rng     = [[0,5],[10,50],[0,2],[0,5]]
 		idrt    = 3
 
 	if exte == "Ell" or exte =="Seg":
@@ -110,17 +111,33 @@ if model == "GKing":
 		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]", 
 					"$r_{cb}$ [pc]","$r_{tb}$ [pc]","$\\alpha$","$\\beta$"]
 		params  = [np.pi/4,2.0,20.0,2.0,20.0,0.5,2.0]
-		hyp     = np.array([10,10,1,1])
-		rng     = [[-0.5*np.pi,0.5*np.pi],[0,20],[10,30],[0,20],[10,30],[0,5],[0,5]]
+		rng     = [[-0.5*np.pi,0.5*np.pi],[0,5],[10,50],[0,5],[10,50],[0,2],[0,5]]
 		id_rc   = [3,5]
 		idrt    = 4
+	hyp     = np.array([src,srt,texp,sexp])
+
+if model == "King":
+	if exte == "None" or exte =="Ctr":
+		#--------- Initial parameters --------------
+		namepar = ["$r_c$ [pc]", "$r_t$ [pc]"]
+		params  = [2.0,20.0]
+		rng     = [[0,5],[10,70]]
+		idrt    = 3
+	if exte == "Ell" or exte =="Seg":
+		#--------- Initial parameters --------------
+		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]",
+					 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
+		params  = [np.pi/4,2.0,20.0,2.0,20.0]
+		rng     = [[-0.5*np.pi,0.5*np.pi],[0,5],[10,70],[0,5],[10,70]]
+		id_rc   = [3,5]
+		idrt    = 4
+	hyp     = np.array([src,srt])
 
 if model == "OGKing":
 	if exte == "None" or exte =="Ctr":
 		#--------- Initial parameters --------------
 		namepar = ["$r_c$ [pc]","$r_t$ [pc]"]
 		params  = [2.0,20.0]
-		hyp     = np.array([10,10])
 		rng     = [[0,4],[10,20]]
 		idrt    = 3
 
@@ -129,46 +146,26 @@ if model == "OGKing":
 		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]",
 					 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
 		params  = [np.pi/4,2.0,20.0,2.0,20.0]
-		hyp     = np.array([10,10])
 		rng     = [[-0.5*np.pi,0.5*np.pi],[0,4],[10,20],[0,4],[10,20]]
 		id_rc   = [3,5]
 		idrt    = 4
-
-
-if model == "GDP":
-	if exte == "None" or exte =="Ctr":
-	#--------- Initial parameters --------------
-		namepar = ["$r_c$ [pc]","$\\alpha$","$\\beta$","$\gamma$"]
-		params  = [2.0,0.5,2.0,0.1]
-		hyp     = np.array([10,1,1,1])
-		rng     = [[0,40],[0,2],[0,40],[0,1]]
-
-	if exte == "Ell" or exte =="Seg":
-		#--------- Initial parameters --------------
-		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{cb}$ [pc]",
-					"$\\alpha$","$\\beta$","$\gamma$"]
-		params  = [np.pi/4,2.0,2.0,0.5,2.0,0.0]
-		hyp     = np.array([10,1,1,1])
-		rng     = [[-0.5*np.pi,0.5*np.pi],[0,40],[0,40],[0,2],[0,40],[0,2]]
-		id_rc   = [3,4]
-
+	hyp     = np.array([src,srt])
 
 if model == "RGDP":
 	if exte == "None" or exte =="Ctr":
 		#--------- Initial parameters --------------
 		namepar = ["$r_c$ [pc]","$\\alpha$","$\\beta$"]
 		params  = [2.0,0.5,2.0]
-		hyp     = np.array([10,1,1])
-		rng     = [[0,40],[0,2],[0,40]]
+		rng     = [[0,10],[0,2],[0,10]]
 
 	if exte == "Ell" or exte =="Seg":
 		#--------- Initial parameters --------------
 		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{cb}$ [pc]",
 					"$\\alpha$","$\\beta$"]
 		params  = [np.pi/4,2.0,2.0,0.5,2.0]
-		hyp     = np.array([10,1,1])
-		rng     = [[-0.5*np.pi,0.5*np.pi],[0,40],[0,40],[0,2],[0,40]]
+		rng     = [[-0.5*np.pi,0.5*np.pi],[0,10],[0,10],[0,2],[0,10]]
 		id_rc   = [3,4]
+	hyp     = np.array([src,texp,sexp])
 
 
 ######### parameters of centre ####################
@@ -193,7 +190,7 @@ if exte == "Seg":
 	rng     = sum([rng,rngSg],[])
 
 ##################### DATA ##############################################################
-Dist    = 136.0
+Dist    = 134.4
 centre  = [56.65,24.13]
 if real :
 	#------- reads data ---------------
@@ -212,6 +209,9 @@ if real :
 	sumc  = np.sum(cdts[:,:2],axis=1)
 	if len(sumc) != len(list(set(sumc))):
 		sys.exit("Duplicated entries in Coordinates!")
+	##----- Select objects with J band observed and less than 19
+	ido   = np.where(cdts[:,3] <= 19)[0]
+	cdts  = cdts[ido]
 else :
 	# -------- Check if file exists -------
 	if os.path.exists(fsyn):
@@ -241,8 +241,8 @@ Module  = mod.Module(cdts,Rcut,hyp,Dist,centre)
 ndim     = len(namepar)
 n_params = len(namepar)
 
-# pymultinest.run(Module.LogLike,Module.Priors, n_params,resume = False, verbose = True,#n_live_points=500,
-# 	outputfiles_basename=dir_out+'/0-',multimodal=True, max_modes=2,sampling_efficiency = 'model')
+pymultinest.run(Module.LogLike,Module.Priors, n_params,resume = False, verbose = True,#n_live_points=500,
+	outputfiles_basename=dir_out+'/0-',multimodal=True, max_modes=2,sampling_efficiency = 'model')
 
 # analyse the results
 ana = pymultinest.Analyzer(n_params = n_params, outputfiles_basename=dir_out+'/0-')
@@ -264,10 +264,7 @@ print("Global Evidence:\n\t%.15e +- %.15e" % (summary['nested sampling global lo
 # ----- select only 100 parameters to plot
 samp = samples[np.random.choice(np.arange(len(samples)),size=100,replace=False)]
 
-############### Stores the MAP ##############
 
-np.savetxt(dir_out+"/"+model+"_map.txt",MAP.reshape(1,len(MAP)),
-		fmt=str('%2.3f'),delimiter="\t")
 ############### Stores the covariance matrix ##############
 print("Finding covariance matrix around MAP ...")
 covar = fCovar(samples,MAP)
@@ -290,10 +287,6 @@ x                     = np.linspace(0.01,Rmax,50)
 
 pdf = PdfPages(dir_out+"/"+model+'_fit.pdf')
 
-if Rcut < 10:
-	lmin_den = 4e-3
-else:
-	lmin_den = 1e-4
 plt.figure()
 for s,par in enumerate(samp):
 	plt.plot(x,mod.Number(x,par,Rmax,np.max(Nr)),lw=1,color="orange",alpha=0.2,zorder=1)
@@ -314,7 +307,7 @@ plt.errorbar(bins,dens[:,0],yerr=dens[:,1],fmt="o",color="black",lw=1,ms=2,zorde
 plt.plot(x,mod.Density(x,MAP,Rmax), linewidth=1,color="red",zorder=2)
 plt.ylabel("Density [stars $\cdot$ pc$^{-2}$]")
 plt.xlabel("Radius [pc]")
-plt.ylim(lmin_den,0.5)
+plt.ylim(1e-3,0.5)
 plt.yscale("log")
 pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 plt.close()
@@ -386,20 +379,12 @@ if exte == "Seg":
 
 	plt.ylabel("Density [stars $\cdot$ pc$^{-2}$]")
 	plt.xlabel("Radius [pc]")
-	plt.ylim(lmin_den,0.5)
+	plt.ylim(1e-3,0.5)
 	plt.yscale("log")
 	pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 	plt.close()
 
-	# df   = pd.DataFrame(np.c_[radii_l,cdts[idl,3]],columns = ['r','J'])
-
-	# p = sns.JointGrid(data=df,x ='r',y ='J',xlim=(0,Rmax), ylim=(3,19))
-	# p = p.plot_joint(plt.scatter)
-	# p = p.ax_marg_x.plot(x,mod.Density(x,[0,1,2,MAP[3]+(dlt_m*MAP[7]),MAP[4]],Rmax),
-	# 		 linewidth=1,color="cyan")
-	# pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
-	# plt.close()
-
+#######################  ELLIPTICITIES ##############################
 if exte == "Ell" or exte == "Seg":
 	eps_rc     = np.array(map(Epsilon,samples[:,id_rc]))
 	kde        = st.gaussian_kde(eps_rc)
@@ -430,9 +415,7 @@ if exte == "Ell" or exte == "Seg":
 	pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 	plt.close()
 
-	f_e = file(dir_out+"/"+model+"_map.txt", 'a')
-	np.savetxt(f_e, epsilons,fmt=str('%2.3f'),delimiter=" ")
-	f_e.close()
+	MAP = np.append(MAP,epsilons)
 
 #--------- computes the distribution of number of stars -----
 if model in ["GKing","King","OGKing"]:
@@ -458,8 +441,12 @@ if model in ["GKing","King","OGKing"]:
 	np.savetxt(f_e, Nrt_mode,fmt=str('%2.3f'),delimiter=" ")
 	np.savetxt(f_e, np.c_[bins,nrt],fmt=str('%2.5e'),delimiter=" ")
 	f_e.close()
-		
 pdf.close()
+
+############### Stores the MAP ##############
+np.savetxt(dir_out+"/"+model+"_map.txt",MAP.reshape(1,len(MAP)),
+		fmt=str('%2.3f'),delimiter="\t")
+
 print("Take a look at the pdf files in "+dir_out) 
 
 
