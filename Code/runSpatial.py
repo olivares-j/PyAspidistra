@@ -8,7 +8,7 @@ import importlib
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import seaborn as sns
+import matplotlib.ticker as mtick
 import pymultinest
 import corner
 
@@ -16,7 +16,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import pandas as pd
 from scipy.optimize import brentq
 import scipy.stats as st
-from Functions import Deg2pc,TruncSort,DenNum,RotRadii,fMAP,fCovar,Epsilon
+from Functions import Deg2pc,TruncSort,DenNum,RotRadii,fMAP,fCovar,Epsilon,MassRj,MassEps
 
 #########################################################################################
 dir_  = os.path.expanduser('~') +"/PyAspidistra/"
@@ -241,8 +241,8 @@ Module  = mod.Module(cdts,Rcut,hyp,Dist,centre)
 ndim     = len(namepar)
 n_params = len(namepar)
 
-pymultinest.run(Module.LogLike,Module.Priors, n_params,resume = False, verbose = True,#n_live_points=500,
-	outputfiles_basename=dir_out+'/0-',multimodal=True, max_modes=2,sampling_efficiency = 'model')
+# pymultinest.run(Module.LogLike,Module.Priors, n_params,resume = False, verbose = True,#n_live_points=500,
+# 	outputfiles_basename=dir_out+'/0-',multimodal=True, max_modes=2,sampling_efficiency = 'model')
 
 # analyse the results
 ana = pymultinest.Analyzer(n_params = n_params, outputfiles_basename=dir_out+'/0-')
@@ -390,10 +390,13 @@ if exte == "Ell" or exte == "Seg":
 	kde        = st.gaussian_kde(eps_rc)
 	x          = np.linspace(0,1,num=100)
 	epsrc_mode = x[kde(x).argmax()]
+	epsrc_low  = brentq(lambda x:kde.integrate_box_1d(0,x)-0.16,a=0.0,b=1.0)
+	epsrc_up   = brentq(lambda x:kde.integrate_box_1d(0,x)-0.84,a=0.0,b=1.0)
+	qepsrc     = [epsrc_low,epsrc_mode,epsrc_up]
 	nerc,bins,_= plt.hist(eps_rc,50, normed=1,
 					ec="black",histtype='step', linestyle='solid',label="$\epsilon_{rc}$")
-	
-	
+	plt.vlines(qepsrc,0,kde(qepsrc),colors="grey",alpha=0.5)
+	plt.text(0.5,np.max(nerc),'$\epsilon_{rc}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(qepsrc) ))
 	epsilons = np.array([epsrc_mode])
 	plt.ylim(0,1.1*np.max(nerc))
 
@@ -402,13 +405,19 @@ if exte == "Ell" or exte == "Seg":
 		kde         = st.gaussian_kde(eps_rt)
 		x           = np.linspace(0,1,num=1000)
 		epsrt_mode  = x[kde(x).argmax()]
+		epsrt_low  = brentq(lambda x:kde.integrate_box_1d(0,x)-0.16,a=0.0,b=1.0)
+		epsrt_up   = brentq(lambda x:kde.integrate_box_1d(0,x)-0.84,a=0.0,b=1.0)
+		qepsrt     = [epsrt_low,epsrt_mode,epsrt_up]
+
 		nert,bins,_ = plt.hist(eps_rt,50, normed=1, range=[0,1], 
 						ec="black",histtype='step', linestyle='dashed',label="$\epsilon_{rt}$")
-		
+		plt.vlines(qepsrt,0,kde(qepsrt),colors="grey",alpha=0.5,linestyle="dashed")
+		plt.text(0.5,0.95*np.max(nerc),'$\epsilon_{rt}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(qepsrt) ))
 		epsilons = np.array([epsrc_mode,epsrt_mode]).reshape((1,2))
 		plt.ylim(0,1.1*max([np.max(nert),np.max(nerc)]))
 
 	#---------------------------
+	plt.gca().xaxis.set_major_formatter(mtick.FormatStrFormatter('%.02f')) 
 	plt.xlim(0,1)
 	plt.xlabel('$\epsilon$')
 	plt.legend()
@@ -441,6 +450,44 @@ if model in ["GKing","King","OGKing"]:
 	np.savetxt(f_e, Nrt_mode,fmt=str('%2.3f'),delimiter=" ")
 	np.savetxt(f_e, np.c_[bins,nrt],fmt=str('%2.5e'),delimiter=" ")
 	f_e.close()
+#--------- computes the distribution of total mass -----
+	bins          = np.linspace(0,1e4,num=100) 
+	massrj        = MassRj(samples[:,idrt])
+	massrj        = massrj[np.where(massrj < 1e4)[0]]
+	kde           = st.gaussian_kde(massrj)
+	x             = np.linspace(np.min(massrj),np.max(massrj),num=1000)
+	massrj_mode   = np.array(x[kde(x).argmax()]).reshape((1,))
+
+	nmr,_,_       = plt.hist(massrj,bins=bins, normed=1,ec="black",ls="dashed",histtype='step',label="$M_{rt}$")
+	nmr           = np.append(nmr,0)
+	mass_mode     = np.array([massrj_mode]).reshape((1,1))
+	nms           = np.c_[bins,nmr]
+
+	  
+	if not exte == "Ctr":
+		massep        = MassEps(samples[:,idrt],eps_rt)
+		massep        = massep[np.where(massep < 1e4)[0]]
+		kde           = st.gaussian_kde(massep)
+		x             = np.linspace(np.min(massep),np.max(massep),num=1000)
+		massep_mode   = np.array(x[kde(x).argmax()]).reshape((1,))
+		nme,_,_       = plt.hist(massep,bins=bins, normed=1,ec="black",histtype='step',label="$M_{\epsilon}$")
+		nme           = np.append(nme,0)
+		mass_mode     = np.array([massrj_mode,massep_mode]).reshape((1,2))
+		nms           = np.c_[bins,nmr,nme]
+
+	plt.legend()
+	plt.ylabel("Density")
+	plt.xlabel("Total mass [$M_\odot$]")
+	plt.yscale("log")
+	# plt.ylim(1e-5,1)
+	pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
+	plt.close()
+
+	f_e = file(dir_out+"/"+model+"_mass.txt", 'w')
+	np.savetxt(f_e, mass_mode,fmt=str('%2.3f'),delimiter=" ")
+	np.savetxt(f_e, nms,fmt=str('%2.5e'),delimiter=" ")
+	f_e.close()
+
 pdf.close()
 
 ############### Stores the MAP ##############

@@ -25,18 +25,18 @@ log                     = $(DIR_LOG)/$(cluster)_$(process).log
 
 EXT  = Ctr
 
-arguments               = EFF $(RCUT) $(EXT) 
-queue
-arguments               = GDP $(RCUT) $(EXT) 
-queue
-arguments               = GKing $(RCUT) $(EXT) 
-queue
-arguments               = King $(RCUT) $(EXT) 
-queue
-arguments               = OGKing $(RCUT) $(EXT) 
-queue
-arguments               = RGDP $(RCUT) $(EXT) 
-queue
+# arguments               = EFF $(RCUT) $(EXT) 
+# queue
+# arguments               = GDP $(RCUT) $(EXT) 
+# queue
+# arguments               = GKing $(RCUT) $(EXT) 
+# queue
+# arguments               = King $(RCUT) $(EXT) 
+# queue
+# arguments               = OGKing $(RCUT) $(EXT) 
+# queue
+# arguments               = RGDP $(RCUT) $(EXT) 
+# queue
 
 
 EXT  = Ell

@@ -22,6 +22,11 @@ def my_format1(x):
 		return " "
 	return "{0:.2f}".format(x)
 
+def my_format2(x):
+	if np.isnan(x):
+		return " "
+	return "{0:.0f}".format(x)
+
 #########################################################################################
 dir_  = os.path.expanduser('~') +"/PyAspidistra/"
 
@@ -37,6 +42,10 @@ if not os.path.exists(dir_out): os.mkdir(dir_out)
 evs    = np.nan*np.ones((2,len(extes),len(models)))
 Nrts   = np.empty((len(extes),len(Rcuts),3,50,2))
 Nrtm   = np.empty((len(extes),len(Rcuts),3))
+Mrts   = np.empty((len(extes),len(Rcuts),3,100,2))
+Mrtm   = np.empty((len(extes),len(Rcuts),3))
+Meps   = np.empty((len(extes)-1,len(Rcuts),3,100,2))
+Mepm   = np.empty((len(extes)-1,len(Rcuts),3))
 for e,exte in enumerate(extes):
 
 	if exte == "None":
@@ -133,6 +142,19 @@ for e,exte in enumerate(extes):
 				Nrts[e,r,i-2,:,:] = np.array(pn.read_csv(fnums,
 					nrows=50,delim_whitespace=True,header=None,skiprows=1))
 
+
+				fmass  = dir_+'Analysis/'+dir_ext+"/"+model+'_'+str(Rcut)+"/"+model+"_mass.txt"
+				Mrtm[e,r,i-2] = np.array(pn.read_csv(fmass,
+					nrows=1,delim_whitespace=True,header=None,skiprows=0))[0][0]
+
+				Mrts[e,r,i-2,:,:] = np.array(pn.read_csv(fmass,
+					nrows=100,delim_whitespace=True,header=None,skiprows=1))[:,:2]
+				if not exte == "Ctr": 
+					Mepm[e-1,r,i-2] = np.array(pn.read_csv(fmass,
+						nrows=1,delim_whitespace=True,header=None,skiprows=0))[0][1]
+					Meps[e-1,r,i-2,:,:] = np.array(pn.read_csv(fmass,
+						nrows=100,delim_whitespace=True,header=None,skiprows=1))[:,[0,2]]
+
 		maps = pn.DataFrame(MAPs,columns=pnames)
 		maps = maps.rename(lambda x:models[x])
 
@@ -158,27 +180,69 @@ for r,Rcut in enumerate(Rcuts):
 	fout = dir_out+"BF_All_"+str(Rcut)+".txt"
 	df.to_latex(fout,index_names=True,float_format=my_format,multirow=True)
 
+pdf = PdfPages(dir_out+"Nsys_"+str(Rcut)+".pdf")
+plt.figure()
+
 for i,model in enumerate(["GKing","King","OGKing"]):
-	pdf = PdfPages(dir_out+"Nsys_"+model+'.pdf')
-	plt.figure()
 	for e,ext in enumerate(extes):
 		for r,Rcut in enumerate(Rcuts):
 			plt.hist(Nrts[e,r,i,:,0],50,weights=Nrts[e,r,i,:,1],align="mid",
-					histtype='step',alpha=0.5,label=ext+" "+str(Rcut))
-	plt.title(model)
-	plt.yscale("log")
-	plt.legend()
-	pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
-	plt.close()
-	pdf.close()
+					histtype='step',alpha=0.7,label=model+"+"+ext)
+plt.ylabel("Density")
+plt.xlabel("Total number of systems")
+plt.yscale("log")
+plt.ylim(ymin=1e-5)
+plt.legend()
+pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
+plt.close()
+pdf.close()
 
 df = pn.DataFrame(Nrtm.reshape(len(extes),3),columns=["GKing","King","OGKing"])
 df = df.rename(lambda x:extes[x])
 
-# -------- Writes Bayes factors -------------------------
+# -------- Writes numbers -------------------------
 fout = dir_out+"Nsys_"+str(Rcut)+".txt"
-df.to_latex(fout,index_names=True,float_format=my_format1,multirow=True)
+df.to_latex(fout,index_names=True,float_format=my_format2,multirow=True)
 
+#------masses
+
+pdf = PdfPages(dir_out+"Msys_"+str(Rcut)+".pdf")
+plt.figure()
+for i,model in enumerate(["GKing","King","OGKing"]):
+	# for e,ext in enumerate(extes[0]):
+		for r,Rcut in enumerate(Rcuts):
+			plt.hist(Mrts[1,r,i,:,0],50,weights=Mrts[1,r,i,:,1],align="mid",
+					alpha=0.7,histtype='step',label=model)
+plt.ylabel("Density")
+plt.xlabel("Total mass [$M_\odot$]")
+plt.yscale("log")
+plt.ylim(ymin=1e-5)
+plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+       ncol=3, mode="expand", borderaxespad=0.)
+pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
+plt.close()
+plt.figure()
+for i,model in enumerate(["GKing","King","OGKing"]):
+	for e,ext in enumerate(extes[1:]):
+		for r,Rcut in enumerate(Rcuts):
+			plt.hist(Meps[e,r,i,:,0],50,weights=Meps[e,r,i,:,1],align="mid",
+					histtype='step',label=model+"+"+ext)
+plt.ylabel("Density")
+plt.xlabel("Total mass [$M_\odot$]")
+plt.yscale("log")
+plt.ylim(ymin=1e-5)
+plt.legend()
+pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
+plt.close()
+pdf.close()
+
+
+df = pn.DataFrame(Mrtm.reshape(len(extes),3),columns=["GKing","King","OGKing"])
+df = df.rename(lambda x:extes[x])
+
+# -------- Writes numbers -------------------------
+fout = dir_out+"Msys_"+str(Rcut)+".txt"
+df.to_latex(fout,index_names=True,float_format=my_format2,multirow=True)
 
 
 

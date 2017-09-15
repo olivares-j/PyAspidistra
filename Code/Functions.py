@@ -87,6 +87,29 @@ def Epsilon(c):
 	return 1.0 - (c[1]/c[0])
 
 
+@jit
+def MassRj(rj):
+	# From binney and tremain eq 8.106
+	# and 3.84, values from bovy https://arxiv.org/abs/1610.07610
+	a =  15.3  # km s-1 kpc-1
+	b = -11.9  # km s-1 kpc-1
+	Omg = (a-b)
+	G = 4.3E-3                #pc Msol-1 (km/s)^2
+	m = (4*a*Omg*(rj**3))/G #In solar masses
+	# dif = rj-(G*m/(4*a*(a-b)))**(1.0/3.0)
+	# print dif
+	return m * 1e-6
+
+@jit
+def MassEps(rj,f):
+	# from http://farside.ph.utexas.edu/teaching/336k/Newtonhtml/node111.html
+	# Eq. 944
+	e = np.sqrt(f*(2.0-f))
+	m = (1.0/e)*(5.0/4.0)*MassRj(rj)
+	return m
+
+
+
 
 
 
