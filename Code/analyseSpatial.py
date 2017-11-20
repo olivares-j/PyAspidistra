@@ -35,6 +35,7 @@ dir_  = os.path.expanduser('~') +"/PyAspidistra/"
 models = np.array(["EFF","GDP","GKing","King","OGKing","RGDP"])
 Rcuts  = [11]
 extes  = ["Ctr","Ell","Seg"]
+lstys  = ['-','--',':','-.']
 
 dir_out = dir_+'Analysis/BayesFactors/'
 if not os.path.exists(dir_out): os.mkdir(dir_out)
@@ -208,32 +209,19 @@ df.to_latex(fout,index_names=True,float_format=my_format2,multirow=True)
 
 pdf = PdfPages(dir_out+"Msys_"+str(Rcut)+".pdf")
 plt.figure()
-for i,model in enumerate(["GKing","King","OGKing"]):
-	# for e,ext in enumerate(extes[0]):
-		for r,Rcut in enumerate(Rcuts):
-			plt.hist(Mrts[1,r,i,:,0],50,weights=Mrts[1,r,i,:,1],align="mid",
-					alpha=0.7,histtype='step',label=model)
-plt.ylabel("Density")
-plt.xlabel("Total mass [$M_\odot$]")
-plt.yscale("log")
-plt.ylim(ymin=1e-5)
-plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
-       ncol=3, mode="expand", borderaxespad=0.)
-pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
-plt.close()
-plt.figure()
-for i,model in enumerate(["GKing","King","OGKing"]):
-	for e,ext in enumerate(extes[1:]):
-		for r,Rcut in enumerate(Rcuts):
-			plt.hist(Meps[e,r,i,:,0],50,weights=Meps[e,r,i,:,1],align="mid",
-					histtype='step',label=model+"+"+ext)
-plt.ylabel("Density")
-plt.xlabel("Total mass [$M_\odot$]")
-plt.yscale("log")
-plt.ylim(ymin=1e-5)
-plt.legend()
-pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
-plt.close()
+for e,ext in enumerate(extes):
+	for i,model in enumerate(["GKing","King","OGKing"]):
+			for r,Rcut in enumerate(Rcuts):
+				plt.hist(Mrts[e,r,i,:,0],50,weights=Mrts[e,r,i,:,1],align="mid",
+						alpha=0.7,histtype='step',label=model,ls=lstys[i])
+	plt.ylabel("Density")
+	plt.xlabel("Total mass [$M_\odot$]")
+	plt.yscale("log")
+	plt.ylim(ymin=1e-5)
+	plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+	       ncol=3, mode="expand", borderaxespad=0.)
+	pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
+	plt.close()
 pdf.close()
 
 

@@ -319,6 +319,7 @@ plt.ylabel('Density [stars $\cdot$ radians$^{-1}$]')
 pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 plt.close()
 
+plt.rc('font', size=14)  
 
 if real :
 	corner.corner(samples, labels=namepar,truths=MAP,truth_color="red",range=rng,
