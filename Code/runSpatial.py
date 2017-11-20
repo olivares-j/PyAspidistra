@@ -138,7 +138,7 @@ if model == "OGKing":
 		#--------- Initial parameters --------------
 		namepar = ["$r_c$ [pc]","$r_t$ [pc]"]
 		params  = [2.0,20.0]
-		rng     = [[0,4],[10,20]]
+		rng     = [[0,4],[10,40]]
 		idrt    = 3
 
 	if exte == "Ell" or exte =="Seg":
@@ -146,7 +146,7 @@ if model == "OGKing":
 		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]",
 					 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
 		params  = [np.pi/4,2.0,20.0,2.0,20.0]
-		rng     = [[-0.5*np.pi,0.5*np.pi],[0,4],[10,20],[0,4],[10,20]]
+		rng     = [[-0.5*np.pi,0.5*np.pi],[0,4],[10,40],[0,4],[10,20]]
 		id_rc   = [3,5]
 		idrt    = 4
 	hyp     = np.array([src,srt])
@@ -210,8 +210,9 @@ if real :
 	if len(sumc) != len(list(set(sumc))):
 		sys.exit("Duplicated entries in Coordinates!")
 	##----- Select objects with J band observed and less than 19
-	ido   = np.where(cdts[:,3] <= 19)[0]
+	ido   = np.where(cdts[:,3] <= 20)[0]
 	cdts  = cdts[ido]
+	# print(cdts.shape)
 else :
 	# -------- Check if file exists -------
 	if os.path.exists(fsyn):
@@ -397,7 +398,7 @@ if exte == "Ell" or exte == "Seg":
 	nerc,bins,_= plt.hist(eps_rc,50, normed=1,
 					ec="black",histtype='step', linestyle='solid',label="$\epsilon_{rc}$")
 	plt.vlines(qepsrc,0,kde(qepsrc),colors="grey",alpha=0.5)
-	plt.text(0.5,np.max(nerc),'$\epsilon_{rc}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(qepsrc) ))
+	plt.text(0.6,0.8*np.max(nerc),'$\epsilon_{rc}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(qepsrc) ))
 	epsilons = np.array([epsrc_mode])
 	plt.ylim(0,1.1*np.max(nerc))
 
@@ -413,7 +414,7 @@ if exte == "Ell" or exte == "Seg":
 		nert,bins,_ = plt.hist(eps_rt,50, normed=1, range=[0,1], 
 						ec="black",histtype='step', linestyle='dashed',label="$\epsilon_{rt}$")
 		plt.vlines(qepsrt,0,kde(qepsrt),colors="grey",alpha=0.5,linestyle="dashed")
-		plt.text(0.5,0.95*np.max(nerc),'$\epsilon_{rt}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(qepsrt) ))
+		plt.text(0.6,0.7*np.max(nerc),'$\epsilon_{rt}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(qepsrt) ))
 		epsilons = np.array([epsrc_mode,epsrt_mode]).reshape((1,2))
 		plt.ylim(0,1.1*max([np.max(nert),np.max(nerc)]))
 
