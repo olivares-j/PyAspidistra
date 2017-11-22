@@ -27,13 +27,13 @@ Possible extensions are:
 
 ## Requirements
 In order to run this code you need the following libraries.
--pandas
--numpy
--scipy
--pymultinest
--importlib
--corner
--matplotlib
+- pandas
+- numpy
+- scipy
+- pymultinest
+- importlib
+- corner
+- matplotlib
 
 ##Disclaimer
 This code has not been yet tested. If you experience crashes, please let us know at javier.olivares@univ-grenoble-alpes.fr
