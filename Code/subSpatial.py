@@ -1,3 +1,4 @@
+# Copyright 2017 Javier Olivares Romero
 # Condor submit file 
 
 DIR     = /pcdisk/boneym5/jolivares/PyAspidistra/Code/
