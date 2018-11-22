@@ -23,7 +23,7 @@ import os
 import numpy as np
 import importlib
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('PDF')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import pymultinest
@@ -50,14 +50,17 @@ dir_  = "/home/jromero/Repos/PyAspidistra/"  # Specify the full path to the Aspi
 real  = True
 Ntot  = 10000  # Number of stars if synthetic (real = False)
 
-Dist    = 308
+Dist    = 310
 centre  = [289.10,-16.38]
 
-file_members = dir_+'Data/'+'members.csv' # Put here the name of the members file.
-#"Make sure you have data in right order! (R.A., Dec. Probability, Band,e_band)")
-list_observables = ["ra","dec","probability","G","G_error"]
+dir_analysis = dir_ + "Analysis/"
 
-mag_limit = 19.0
+file_members = dir_+'Data/'+'members_ALL.csv' # Put here the name of the members file.
+#"Make sure you have data in right order! (R.A., Dec. Probability, Band,e_band)")
+list_observables = ["RAJ2000","DEJ2000","probability","G","e_G"]
+
+mag_limit = 25.0
+pro_limit = 0.5
 
 
 #-------------------- MODEL PRIORS -----------------------------------------------
@@ -101,8 +104,8 @@ if model == "GKing":
 	if exte == "None" or exte =="Ctr":
 		#--------- Initial parameters --------------
 		namepar = ["$r_c$ [pc]","$r_t$ [pc]","$\\alpha$","$\\beta$"]
-		params  = [2.0,20.0,0.5,2.0]
-		rng     = [[0,5],[10,50],[0,2],[0,5]]
+		params  = [2.0,30.0,0.5,2.0]
+		rng     = [[0,5],[10,100],[0,2],[0,5]]
 		idrt    = 3
 
 	if exte == "Ell" or exte =="Seg":
@@ -111,7 +114,7 @@ if model == "GKing":
 		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]", 
 					"$r_{cb}$ [pc]","$r_{tb}$ [pc]","$\\alpha$","$\\beta$"]
 		params  = [np.pi/4,2.0,20.0,2.0,20.0,0.5,2.0]
-		rng     = [[-0.5*np.pi,0.5*np.pi],[0,5],[10,50],[0,5],[10,50],[0,2],[0,5]]
+		rng     = [[-0.5*np.pi,0.5*np.pi],[0,5],[10,100],[0,5],[10,100],[0,2],[0,5]]
 		id_rc   = [3,5]
 		idrt    = 4
 	hyp     = np.array([src,srt,texp,sexp])
@@ -120,15 +123,15 @@ if model == "King":
 	if exte == "None" or exte =="Ctr":
 		#--------- Initial parameters --------------
 		namepar = ["$r_c$ [pc]", "$r_t$ [pc]"]
-		params  = [2.0,20.0]
-		rng     = [[0,5],[10,70]]
+		params  = [2.0,30.0]
+		rng     = [[0,5],[10,100]]
 		idrt    = 3
 	if exte == "Ell" or exte =="Seg":
 		#--------- Initial parameters --------------
 		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]",
 					 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
-		params  = [np.pi/4,2.0,20.0,2.0,20.0]
-		rng     = [[-0.5*np.pi,0.5*np.pi],[0,5],[10,70],[0,5],[10,70]]
+		params  = [np.pi/4,2.0,30.0,2.0,30.0]
+		rng     = [[-0.5*np.pi,0.5*np.pi],[0,5],[10,100],[0,5],[10,100]]
 		id_rc   = [3,5]
 		idrt    = 4
 	hyp     = np.array([src,srt])
@@ -137,16 +140,16 @@ if model == "OGKing":
 	if exte == "None" or exte =="Ctr":
 		#--------- Initial parameters --------------
 		namepar = ["$r_c$ [pc]","$r_t$ [pc]"]
-		params  = [2.0,20.0]
-		rng     = [[0,4],[10,40]]
+		params  = [2.0,30.0]
+		rng     = [[0,5],[10,100]]
 		idrt    = 3
 
 	if exte == "Ell" or exte =="Seg":
 		#--------- Initial parameters --------------
 		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]",
 					 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
-		params  = [np.pi/4,2.0,20.0,2.0,20.0]
-		rng     = [[-0.5*np.pi,0.5*np.pi],[0,4],[10,40],[0,4],[10,20]]
+		params  = [np.pi/4,2.0,30.0,2.0,30.0]
+		rng     = [[-0.5*np.pi,0.5*np.pi],[0,4],[10,100],[0,4],[10,100]]
 		id_rc   = [3,5]
 		idrt    = 4
 	hyp     = np.array([src,srt])
@@ -174,7 +177,7 @@ hypCtr    = np.array([1.0,1.0])
 rngCtr    = [[centre[0]-1.0,centre[0]+1.0],[centre[1]-1.0,centre[1]+1.0]]
 ######### Parameter of luminosity segregation #########
 nameSg    = ["$\kappa$ [pc$\cdot \\rm{mag}^{-1}$]"]
-hypSg     = np.array([0,0.5]) # Uniform prior between hypSg[0] and hypSg[0]+hypSg[1]
+hypSg     = np.array([0,0.5]) # Normal prior at hypSg[0] with scale hypSg[1]
 rngSg     = [[-0.6,1.2]]
 
 
@@ -214,12 +217,15 @@ else :
 	sys.exit()
 ###############################################################################
 
+#------ Creates directory of extension -------
+dir_fext   = dir_analysis+fext
+if not os.path.exists(dir_fext): os.mkdir(dir_fext)
+
 
 ############## Directory of outputs ##################################################
-if real :
-	dir_out  = dir_+'Analysis/'+fext+model+'_'+str(int(Rcut))
-else:
-	dir_out  = dir_+'Analysis/Synthetic/'+fext+model+'_'+str(int(Rcut))+'_'+str(Ntot)
+dir_out  = dir_fext+model+'_'+str(int(Rcut))
+if not real :
+	dir_out  = dir_out+'_'+str(Ntot)
 	fsyn     = dir_out+'/2-data.csv'
 if not os.path.exists(dir_out): os.mkdir(dir_out)
 #########################################################################################
@@ -235,8 +241,11 @@ if real :
 	df_cdts = df_cdts[list_observables]
 	#---- removes duplicateds --------
 	df_cdts = df_cdts.drop_duplicates()
-	##----- Select objects with J band observed and less than 19
+	##----- Select objects with band observed and 
 	ido      = np.where(df_cdts.loc[:,list_observables[3]] > mag_limit)[0]
+	df_cdts  = df_cdts.drop(ido)
+	##----- Select objects with membership probability larger than treshold
+	ido      = np.where(df_cdts.loc[:,list_observables[2]] < pro_limit)[0]
 	df_cdts  = df_cdts.drop(ido)
 	#---- Transform to numpy array ---------
 	cdts  = df_cdts.values
@@ -294,7 +303,6 @@ print("Global Evidence:\n\t%.15e +- %.15e" % (summary['nested sampling global lo
 # ----- select only 100 parameters to plot
 samp = samples[np.random.choice(np.arange(len(samples)),size=100,replace=False)]
 
-
 ############### Stores the covariance matrix ##############
 print("Finding covariance matrix around MAP ...")
 covar = fCovar(samples,MAP)
@@ -337,7 +345,7 @@ plt.errorbar(bins,dens[:,0],yerr=dens[:,1],fmt="o",color="black",lw=1,ms=2,zorde
 plt.plot(x,mod.Density(x,MAP,Rmax), linewidth=1,color="red",zorder=2)
 plt.ylabel("Density [stars $\cdot$ pc$^{-2}$]")
 plt.xlabel("Radius [pc]")
-plt.ylim(1e-3,0.5)
+plt.ylim(1e-4,0.5)
 plt.yscale("log")
 pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 plt.close()
@@ -350,13 +358,17 @@ pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 plt.close()
 
 plt.rc('font', size=14)  
-
 if real :
 	corner.corner(samples, labels=namepar,truths=MAP,truth_color="red",range=rng,
-		reverse=False,plot_datapoints=False,fill_contours=True)
+		reverse=False,plot_datapoints=False,fill_contours=True,
+		quantiles=[0.025, 0.5, 0.975],
+        show_titles=True, title_kwargs={"fontsize": 12})
 else:
 	corner.corner(samples, labels=namepar,truths=params,truth_color="blue",range=rng,
-		reverse=False,plot_datapoints=False,fill_contours=True)
+		reverse=False,plot_datapoints=False,fill_contours=True,
+		quantiles=[0.025, 0.5, 0.975],
+        show_titles=False, title_kwargs={"fontsize": 12})
+
 pdf.savefig(bbox_inches='tight')
 plt.close()
 
@@ -427,7 +439,7 @@ if exte == "Ell" or exte == "Seg":
 	nerc,bins,_= plt.hist(eps_rc,50, normed=1,
 					ec="black",histtype='step', linestyle='solid',label="$\epsilon_{rc}$")
 	plt.vlines(qepsrc,0,kde(qepsrc),colors="grey",alpha=0.5)
-	plt.text(0.6,0.8*np.max(nerc),'$\epsilon_{rc}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(qepsrc) ))
+	plt.annotate('$\epsilon_{rc}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(qepsrc) ),[0.15,0.85],xycoords="figure fraction")
 	epsilons = np.array([epsrc_mode])
 	plt.ylim(0,1.1*np.max(nerc))
 
@@ -443,7 +455,7 @@ if exte == "Ell" or exte == "Seg":
 		nert,bins,_ = plt.hist(eps_rt,50, density=True, range=[0,1], 
 						ec="black",histtype='step', linestyle='dashed',label="$\epsilon_{rt}$")
 		plt.vlines(qepsrt,0,kde(qepsrt),colors="grey",alpha=0.5,linestyle="dashed")
-		plt.text(0.6,0.7*np.max(nerc),'$\epsilon_{rt}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(qepsrt) ))
+		plt.annotate('$\epsilon_{rt}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(qepsrt) ),[0.7,0.9],xycoords="figure fraction")
 		epsilons = np.array([epsrc_mode,epsrt_mode]).reshape((1,2))
 		plt.ylim(0,1.1*max([np.max(nert),np.max(nerc)]))
 
@@ -451,7 +463,6 @@ if exte == "Ell" or exte == "Seg":
 	plt.gca().xaxis.set_major_formatter(mtick.FormatStrFormatter('%.02f')) 
 	plt.xlim(0,1)
 	plt.xlabel('$\epsilon$')
-	plt.legend()
 	pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 	plt.close()
 

@@ -32,8 +32,8 @@ def Support(rca,rcb,a,b):
     # if rca <= 0 : return False
     # if rcb <= 0 : return False
     if rcb > rca: return False
-    # if a   <= 0 : return False
-    # if b   <  0 : return False
+    if a   <= 0 : return False
+    if b   <= 0 : return False
     # if a > 100.0 or b > 100.0 : return False
     return True
 

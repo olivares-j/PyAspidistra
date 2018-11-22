@@ -45,16 +45,16 @@ def my_format2(x):
 	return "{0:.0f}".format(x)
 
 #########################################################################################
-dir_  = os.path.expanduser('~') +"/PyAspidistra/"
+dir_  = "/home/jromero/Repos/PyAspidistra/"
 
 # exte  = str(sys.argv[1])
 
 models = np.array(["EFF","GDP","GKing","King","OGKing","RGDP"])
-Rcuts  = [11]
+Rcuts  = [33]
 extes  = ["Ctr","Ell","Seg"]
 lstys  = ['-','--',':','-.']
 
-dir_out = dir_+'Analysis/BayesFactors/'
+dir_out = dir_+'Analysis/BayesFactors'
 if not os.path.exists(dir_out): os.mkdir(dir_out)
 
 evs    = np.nan*np.ones((2,len(extes),len(models)))
@@ -142,7 +142,7 @@ for e,exte in enumerate(extes):
 		df = df.rename(lambda x:models[x])
 
 		# -------- Writes Bayes factors -------------------------
-		fout = dir_out+"BF_"+dir_ext+"_"+str(Rcut)+".txt"
+		fout = dir_out+"/BF_"+dir_ext+"_"+str(Rcut)+".txt"
 		df.to_latex(fout,index_names=True,float_format=my_format)
 
 		############### READ MAPS ##############################
@@ -177,7 +177,7 @@ for e,exte in enumerate(extes):
 		maps = maps.rename(lambda x:models[x])
 
 		# -------- Writes MAPS to Latex-------------------------
-		fout = dir_out+"MAPs_"+dir_ext+"_"+str(Rcut)+".txt"
+		fout = dir_out+"/MAPs_"+dir_ext+"_"+str(Rcut)+".txt"
 		maps.to_latex(fout,index_names=True,float_format=my_format1,escape=False)
 
 
@@ -195,10 +195,10 @@ for r,Rcut in enumerate(Rcuts):
 	df = df.rename(lambda x:name_all[x])
 
 	# -------- Writes Bayes factors -------------------------
-	fout = dir_out+"BF_All_"+str(Rcut)+".txt"
+	fout = dir_out+"/BF_All_"+str(Rcut)+".txt"
 	df.to_latex(fout,index_names=True,float_format=my_format,multirow=True)
 
-pdf = PdfPages(dir_out+"Nsys_"+str(Rcut)+".pdf")
+pdf = PdfPages(dir_out+"/Nsys_"+str(Rcut)+".pdf")
 plt.figure()
 
 for i,model in enumerate(["GKing","King","OGKing"]):
@@ -219,12 +219,12 @@ df = pn.DataFrame(Nrtm.reshape(len(extes),3),columns=["GKing","King","OGKing"])
 df = df.rename(lambda x:extes[x])
 
 # -------- Writes numbers -------------------------
-fout = dir_out+"Nsys_"+str(Rcut)+".txt"
+fout = dir_out+"/Nsys_"+str(Rcut)+".txt"
 df.to_latex(fout,index_names=True,float_format=my_format2,multirow=True)
 
 #------masses
 
-pdf = PdfPages(dir_out+"Msys_"+str(Rcut)+".pdf")
+pdf = PdfPages(dir_out+"/Msys_"+str(Rcut)+".pdf")
 plt.figure()
 for e,ext in enumerate(extes):
 	for i,model in enumerate(["GKing","King","OGKing"]):
@@ -246,7 +246,7 @@ df = pn.DataFrame(Mrtm.reshape(len(extes),3),columns=["GKing","King","OGKing"])
 df = df.rename(lambda x:extes[x])
 
 # -------- Writes numbers -------------------------
-fout = dir_out+"Msys_"+str(Rcut)+".txt"
+fout = dir_out+"/Msys_"+str(Rcut)+".txt"
 df.to_latex(fout,index_names=True,float_format=my_format2,multirow=True)
 
 

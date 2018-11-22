@@ -27,8 +27,8 @@ import scipy.integrate as integrate
 print "OGKing Segregated imported!"
 lo     = 1e-5
 
-a  = 0.46
-b  = 1.48
+a  = 0.55
+b  = 2.7
 
 @jit
 def Support(rca,rta,rcb,rtb):

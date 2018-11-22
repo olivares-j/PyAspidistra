@@ -31,7 +31,7 @@ print "RGDP Centre imported!"
 def Support(rc,a,b):
     if rc <= 0 : return False
     if a  <= 0 : return False
-    if b  <=  0 : return False
+    if b  <= 0 : return False
     return True
 
 @jit
