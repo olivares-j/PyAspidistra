@@ -27,6 +27,9 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
+
+from chainconsumer import ChainConsumer
+
 def my_format(x):
 	if x > 999:
 		return ">999"
@@ -72,8 +75,8 @@ for e,exte in enumerate(extes):
 		dir_ext = "Centre"
 
 		#---- parameters ac,dc,rc,rt,alpha,beta,gamma ----------
-		pnames      = np.array(["$\\alpha_c$ [$^\circ$]","$\delta_c$ [$^\circ$]","$r_c$ [pc]","$r_t$ [pc]",
-			"$\\alpha$","$\\beta$","$\gamma$"])
+		pnames     = ["$\\alpha_c$","$\delta_c$","$r_c$","$r_t$","$\\alpha$","$\\beta$","$\gamma$"]
+		units      = ["[$^\circ$]"," [$^\circ$]"," [pc]"," [pc]","$\\alpha$","$\\beta$","$\gamma$"]
 		idx_EFF    =    [1, 1 ,1,0  ,0    ,0   ,1   ]
 		idx_GDP    =    [1, 1 ,1,0  ,1    ,1   ,1   ]
 		idx_GKing  =    [1, 1 ,1,1  ,1    ,1   ,0   ]
@@ -86,9 +89,9 @@ for e,exte in enumerate(extes):
 		dir_ext = "Elliptic"
 
 		#---- parameters ac,dc,rc,rt,alpha,beta,gamma ----------
-		pnames     = np.array(["$\\alpha_c$ [$^\circ$]","$\delta_c$ [$^\circ$]","$\phi$ [rad]",
+		pnames     = ["$\\alpha_c$ [$^\circ$]","$\delta_c$ [$^\circ$]","$\phi$ [rad]",
 					"$r_{ca}$ [pc]","$r_{ta}$ [pc]","$r_{cb}$ [pc]","$r_{tb}$ [pc]","$\\alpha$",
-					"$\\beta$","$\gamma$","$\epsilon_{rc}$","$\epsilon_{rt}$"])
+					"$\\beta$","$\gamma$","$\epsilon_{rc}$","$\epsilon_{rt}$"]
 		idx_EFF    =    [1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0]
 		idx_GDP    =    [1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0]
 		idx_GKing  =    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1]
@@ -103,9 +106,14 @@ for e,exte in enumerate(extes):
 		dir_ext = "Segregated"
 
 		#---- parameters ac,dc,rc,rt,alpha,beta,gamma ----------
-		pnames     = np.array(["$\\alpha_c$ [$^\circ$]","$\delta_c$ [$^\circ$]","$\phi$ [rad]",
-						"$r_{ca}$ [pc]","$r_{ta}$ [pc]","$r_{cb}$ [pc]","$r_{tb}$ [pc]",
-						"$\\alpha$","$\\beta$","$\\gamma$","$\kappa$ [pc mag$^{-1}$]","$\epsilon_{rc}$","$\epsilon_{rt}$"])
+		pnames     = [r"$\alpha_c$",r"$\delta_c$",r"$\phi$",
+						r"$r_{ca}$",r"$r_{ta}$",r"$r_{cb}$",r"$r_{tb}$",
+						r"$\alpha$",r"$\beta$",r"$\gamma$",r"$\kappa$",
+						r"$\epsilon_{rc}$",r"$\epsilon_{rt}$"]
+
+		units      = [r"[$^\circ$]",r"[$^\circ$]","[rad]",
+						"[pc]","[pc]","[pc]","[pc]",
+						"","","",r"[pc mag$^{-1}$]","",""]
 		idx_EFF    =    [1, 1 ,1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0]
 		idx_GDP    =    [1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0]
 		idx_GKing  =    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
@@ -132,7 +140,7 @@ for e,exte in enumerate(extes):
 
 		############ Compute bayes factors ####################
 		bf = np.empty((len(models),len(models)))
-		print zs[:,0]
+		# print zs[:,0]
 		for i,z in enumerate(zs[:,0]):
 			bf[i] = np.exp(z-zs[:,0])
 
@@ -145,40 +153,25 @@ for e,exte in enumerate(extes):
 		fout = dir_out+"/BF_"+dir_ext+"_"+str(Rcut)+".txt"
 		df.to_latex(fout,index_names=True,float_format=my_format)
 
-		############### READ MAPS ##############################
-		MAPs  = np.nan*np.ones((len(models),len(pnames)))
+		# ############### TABLE OF PARAMETERS ##############################
+		# If you pass in parameter labels and only one chain, you can also get parameter bounds
+		c = ChainConsumer()
 		for i,model in enumerate(models):
-			fevid  = dir_+'Analysis/'+dir_ext+"/"+model+'_'+str(Rcut)+"/"+model+"_map.txt"
-			MAPs[i,np.where(idx_MODS[i]==1)[0]] = np.array(pn.read_csv(fevid,
-				nrows=1,delim_whitespace=True,header=None))
+			file_chain  = dir_+'Analysis/'+dir_ext+"/"+model+'_'+str(Rcut)+"/chain.csv"
+			chain  = pn.read_csv(file_chain).as_matrix()
+			idx_names = np.where(idx_MODS[i]==1)[0]
+			names = [pnames[i] for i in idx_names]
+			c.add_chain(chain,parameters=names,name=model)
 
-			#------ reads numbers ---------
-			if model in ["GKing","King","OGKing"]:
-				fnums  = dir_+'Analysis/'+dir_ext+"/"+model+'_'+str(Rcut)+"/"+model+"_numbers.txt"
-				Nrtm[e,r,i-2] = np.array(pn.read_csv(fnums,
-					nrows=1,delim_whitespace=True,header=None,skiprows=0))
-				Nrts[e,r,i-2,:,:] = np.array(pn.read_csv(fnums,
-					nrows=50,delim_whitespace=True,header=None,skiprows=1))
+		c.configure(statistics="cumulative")
 
+		table = c.analysis.get_latex_table(caption="Results for the tested models", label="tab:example")
 
-				fmass  = dir_+'Analysis/'+dir_ext+"/"+model+'_'+str(Rcut)+"/"+model+"_mass.txt"
-				Mrtm[e,r,i-2] = np.array(pn.read_csv(fmass,
-					nrows=1,delim_whitespace=True,header=None,skiprows=0))[0][0]
-
-				Mrts[e,r,i-2,:,:] = np.array(pn.read_csv(fmass,
-					nrows=100,delim_whitespace=True,header=None,skiprows=1))[:,:2]
-				if not exte == "Ctr": 
-					Mepm[e-1,r,i-2] = np.array(pn.read_csv(fmass,
-						nrows=1,delim_whitespace=True,header=None,skiprows=0))[0][1]
-					Meps[e-1,r,i-2,:,:] = np.array(pn.read_csv(fmass,
-						nrows=100,delim_whitespace=True,header=None,skiprows=1))[:,[0,2]]
-
-		maps = pn.DataFrame(MAPs,columns=pnames)
-		maps = maps.rename(lambda x:models[x])
-
-		# -------- Writes MAPS to Latex-------------------------
-		fout = dir_out+"/MAPs_"+dir_ext+"_"+str(Rcut)+".txt"
-		maps.to_latex(fout,index_names=True,float_format=my_format1,escape=False)
+		# # -------- Writes table to file-------------------------
+		fout = dir_out+"/Parameters_"+dir_ext+"_"+str(Rcut)+".tex"
+		
+		with open(fout, "w") as text_file:
+			text_file.write(table)
 
 
 evs = evs.reshape((2,-1))
@@ -245,9 +238,13 @@ pdf.close()
 df = pn.DataFrame(Mrtm.reshape(len(extes),3),columns=["GKing","King","OGKing"])
 df = df.rename(lambda x:extes[x])
 
-# -------- Writes numbers -------------------------
+# -------- Writes masses -------------------------
 fout = dir_out+"/Msys_"+str(Rcut)+".txt"
 df.to_latex(fout,index_names=True,float_format=my_format2,multirow=True)
+
+
+print("Done!")
+
 
 
 

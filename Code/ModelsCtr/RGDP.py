@@ -20,7 +20,7 @@ import sys
 import numpy as np
 from numba import jit
 import scipy.stats as st
-from Functions import Deg2pc,TruncSort
+from Functions import RotRadii
 from pandas import cut, value_counts
 
 from scipy.special import hyp2f1
@@ -35,7 +35,7 @@ def Support(rc,a,b):
     return True
 
 @jit
-def cdf(r,params,Rm):
+def cdf(r,theta,params,Rm):
     rc = params[2]
     a  = params[3]
     b  = params[4]
@@ -51,8 +51,8 @@ def cdf(r,params,Rm):
     return np.abs(d)/np.abs(c)
 
 @jit
-def Number(r,params,Rm,Nstr):
-    return Nstr*cdf(r,params,Rm)
+def Number(r,theta,params,Rm,Nstr):
+    return Nstr*cdf(r,theta,params,Rm)
 
 @jit
 def Kernel(r,rc,a,b):
@@ -60,7 +60,7 @@ def Kernel(r,rc,a,b):
     return 1.0/y
 
 @jit
-def Density(r,params,Rm):
+def Density(r,theta,params,Rm):
     rc = params[2]
     a  = params[3]
     b  = params[4]
@@ -80,18 +80,17 @@ class Module:
     """
     Chain for computing the likelihood 
     """
-    def __init__(self,cdts,Rcut,hyp,Dist,centre_init):
+    def __init__(self,cdts,Rmax,hyp,Dist,centre_init):
         """
         Constructor of the logposteriorModule
         """
-        rad,thet        = Deg2pc(cdts,centre_init,Dist)
-        c,r,t,self.Rmax = TruncSort(cdts,rad,thet,Rcut)
-        self.pro        = c[:,2]
-        self.cdts       = c[:,:2]
+        self.Rmax       = Rmax
+        self.pro        = cdts[:,2]
+        self.cdts       = cdts[:,:2]
         self.Dist       = Dist
         #------------- poisson ----------------
         self.quadrants  = [0,np.pi/2.0,np.pi,3.0*np.pi/2.0,2.0*np.pi]
-        self.poisson    = st.poisson(len(r)/4.0)
+        self.poisson    = st.poisson(len(self.pro)/4.0)
         #-------------- priors ----------------
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
@@ -117,7 +116,7 @@ class Module:
         #     return -1e50
 
         #------- Obtains radii and angles ---------
-        radii,theta    = Deg2pc(self.cdts,ctr,self.Dist)
+        radii,theta = RotRadii(self.cdts,ctr,self.Dist,0.0)
 
         ############### Radial likelihood ###################
 

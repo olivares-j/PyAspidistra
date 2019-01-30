@@ -18,9 +18,10 @@ This file is part of PyAspidistra.
 '''
 import sys
 import numpy as np
+import math
 from numba import jit
 import scipy.stats as st
-from Functions import Deg2pc,TruncSort,RotRadii
+from Functions import RotRadii
 from pandas import cut, value_counts
 
 print "EFF Elliptic imported!"
@@ -35,13 +36,15 @@ def Support(rca,rcb,g):
     return True
 
 @jit
-def Number(r,params,Rm,Nstr):
-    return Nstr*cdf(r,params,Rm)
+def Number(r,theta,params,Rm,Nstr):
+    return Nstr*cdf(r,theta,params,Rm)
 
 @jit
-def cdf(r,params,Rm):
-    rc = params[3]
-    g  = params[5]
+def cdf(r,theta,params,Rm):
+    rca = params[3]
+    rcb = params[4]
+    g   = params[5]
+    rc = (rca*rcb)/np.sqrt((rcb*np.cos(theta))**2+(rca*np.sin(theta))**2)
     w  = r**2  + rc**2
     y  = Rm**2 + rc**2
     a  = rc**2 - (rc**g)*(w**(1.0-0.5*g))
@@ -63,11 +66,13 @@ def LikeField(r,rm):
     return 2.0*r/(rm**2)
 
 @jit
-def Density(r,params,Rm):
-    rc = params[3]
-    g  = params[5]
-    y = rc**2 + Rm**2
-    a = (1.0/(g-2.0))*(1.0-(rc**(g-2.0))*(y**(1.0-0.5*g))) # Truncated at Rm
+def Density(r,theta,params,Rm):
+    rca   = params[3]
+    rcb   = params[4]
+    g     = params[5]
+    rc = (rca*rcb)/np.sqrt((rcb*np.cos(theta))**2+(rca*np.sin(theta))**2)
+    y  = rc**2 + Rm**2
+    a  = (1.0/(g-2.0))*(1.0-(rc**(g-2.0))*(y**(1.0-0.5*g))) # Truncated at Rm
     # a = 1.0/(g-2.0)                                      #  No truncated
     k  = 1.0/(a*(rc**2.0))
     return k*Kernel1(r,rc,g)
@@ -76,22 +81,22 @@ class Module:
     """
     Chain for computing the likelihood 
     """
-    def __init__(self,cdts,Rcut,hyp,Dist,centre_init):
+    def __init__(self,cdts,Rmax,hyp,Dist,centre_init):
         """
         Constructor of the logposteriorModule
         """
-        rad,thet        = Deg2pc(cdts,centre_init,Dist)
-        c,r,t,self.Rmax = TruncSort(cdts,rad,thet,Rcut)
-        self.pro        = c[:,2]
-        self.cdts       = c[:,:2]
+
+        self.Rmax       = Rmax
+        self.pro        = cdts[:,2]
+        self.cdts       = cdts[:,:2]
         self.Dist       = Dist
         #------------- poisson ----------------
         self.quadrants  = [0,np.pi/2.0,np.pi,3.0*np.pi/2.0,2.0*np.pi]
-        self.poisson    = st.poisson(len(r)/4.0)
+        self.poisson    = st.poisson(len(self.pro)/4.0)
         #-------------- priors ----------------
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
-        self.Prior_2    = st.uniform(loc=-0.5*np.pi,scale=np.pi)
+        self.Prior_2    = st.uniform(loc=0,scale=np.pi)
         self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[2])
         self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[2])
         self.Prior_5    = st.truncexpon(b=hyp[3],loc=2.01,scale=hyp[4])
@@ -117,7 +122,7 @@ class Module:
             return -1e50
 
         #------- Obtains radii and angles ---------
-        radii,theta    = RotRadii(self.cdts,ctr,self.Dist,dlt)
+        radii,theta = RotRadii(self.cdts,ctr,self.Dist,dlt)
 
         rcs = (rca*rcb)/np.sqrt((rcb*np.cos(theta))**2+(rca*np.sin(theta))**2)
 

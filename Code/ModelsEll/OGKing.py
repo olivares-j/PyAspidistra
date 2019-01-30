@@ -20,7 +20,7 @@ import sys
 import numpy as np
 from numba import jit
 import scipy.stats as st
-from Functions import Deg2pc,TruncSort,RotRadii
+from Functions import RotRadii
 from pandas import cut, value_counts
 import scipy.integrate as integrate
 
@@ -53,27 +53,44 @@ def Kernel1(r,rc,rt):
     z  = (x-y + 0j)**b
     return z.real
 
-def cdf(r,params,Rm):
-    return NormCte(params,r)/NormCte(params,Rm)
-
-
-def Number(r,params,Rm,Nstr):
+def cdf(r,theta,params,Rm):
     rca = params[3]
     rta = params[4]
+    rcb = params[5]
+    rtb = params[6]
 
-    cte = NormCte(np.array([rca,rta,Rm]))
-    Num = np.vectorize(lambda y: integrate.quad(lambda x:x*Kernel1(x,rca,rta)/cte,lo,y,
+    rc = (rca*rcb)/np.sqrt((rcb*np.cos(theta))**2+(rca*np.sin(theta))**2)
+    rt = (rta*rtb)/np.sqrt((rtb*np.cos(theta))**2+(rta*np.sin(theta))**2)
+    return NormCte(np.array([rc,rt,r]))/NormCte(np.array([rc,rt,Rm]))
+
+
+def Number(r,theta,params,Rm,Nstr):
+    rca = params[3]
+    rta = params[4]
+    rcb = params[5]
+    rtb = params[6]
+
+    rc = (rca*rcb)/np.sqrt((rcb*np.cos(theta))**2+(rca*np.sin(theta))**2)
+    rt = (rta*rtb)/np.sqrt((rtb*np.cos(theta))**2+(rta*np.sin(theta))**2)
+
+    cte = NormCte(np.array([rc,rt,Rm]))
+    Num = np.vectorize(lambda y: integrate.quad(lambda x:x*Kernel1(x,rc,rt)/cte,lo,y,
                 epsabs=1.49e-03, epsrel=1.49e-03,limit=1000)[0])
     return Nstr*Num(r)
 
 
-def Density(r,params,Rm):
+def Density(r,theta,params,Rm):
     rca = params[3]
     rta = params[4]
+    rcb = params[5]
+    rtb = params[6]
 
-    cte = NormCte(np.array([rca,rta,Rm]))
+    rc = (rca*rcb)/np.sqrt((rcb*np.cos(theta))**2+(rca*np.sin(theta))**2)
+    rt = (rta*rtb)/np.sqrt((rtb*np.cos(theta))**2+(rta*np.sin(theta))**2)
 
-    Den = np.vectorize(lambda x:Kernel1(x,rca,rta)/cte)
+    cte = NormCte(np.array([rc,rt,Rm]))
+
+    Den = np.vectorize(lambda x:Kernel1(x,rc,rt)/cte)
     return Den(r)
 
 
@@ -89,22 +106,21 @@ class Module:
     """
     Chain for computing the likelihood 
     """
-    def __init__(self,cdts,Rcut,hyp,Dist,centre_init):
+    def __init__(self,cdts,Rmax,hyp,Dist,centre_init):
         """
         Constructor of the logposteriorModule
         """
-        rad,thet        = Deg2pc(cdts,centre_init,Dist)
-        c,r,t,self.Rmax = TruncSort(cdts,rad,thet,Rcut)
-        self.pro        = c[:,2]
-        self.cdts       = c[:,:2]
+        self.Rmax       = Rmax
+        self.pro        = cdts[:,2]
+        self.cdts       = cdts[:,:2]
         self.Dist       = Dist
         #------------- poisson ----------------
         self.quadrants  = [0,np.pi/2.0,np.pi,3.0*np.pi/2.0,2.0*np.pi]
-        self.poisson    = st.poisson(len(r)/4.0)
+        self.poisson    = st.poisson(len(self.pro)/4.0)
         #-------------- priors ----------------
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
-        self.Prior_2    = st.uniform(loc=-0.5*np.pi,scale=np.pi)
+        self.Prior_2    = st.uniform(loc=0,scale=np.pi)
         self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[2])
         self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[3])
         self.Prior_5    = st.halfcauchy(loc=0.01,scale=hyp[2])

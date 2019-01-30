@@ -20,7 +20,7 @@ import sys
 import numpy as np
 from numba import jit
 import scipy.stats as st
-from Functions import Deg2pc,TruncSort,RotRadii
+from Functions import RotRadii
 from pandas import cut, value_counts
 
 print "King Elliptic imported!"
@@ -36,9 +36,15 @@ def Support(rca,rta,rcb,rtb):
     return True
 
 @jit
-def cdf(r,params,Rm):
-    rc = params[3]
-    rt = params[4]
+def cdf(r,theta,params,Rm):
+    rca = params[3]
+    rta = params[4]
+    rcb = params[5]
+    rtb = params[6]
+
+    rc = (rca*rcb)/np.sqrt((rcb*np.cos(theta))**2+(rca*np.sin(theta))**2)
+    rt = (rta*rtb)/np.sqrt((rtb*np.cos(theta))**2+(rta*np.sin(theta))**2)
+
     w = rc**2 +  r**2 
     y = rc**2 + Rm**2
     z = rc**2 + rt**2
@@ -47,9 +53,9 @@ def cdf(r,params,Rm):
     return a/b
 
 @jit
-def Number(r,params,Rm,Nstr):
+def Number(r,theta,params,Rm,Nstr):
     # Rm must be less or equal to rt
-    return Nstr*cdf(r,params,Rm)
+    return Nstr*cdf(r,theta,params,Rm)
 
 @jit
 def Kernel(r,rc,rt): # Receives vectors
@@ -69,9 +75,14 @@ def Kernel1(r,rc,rt): # Receive vector (r) and rc and rt as scalars
 def LikeField(r,rm):
     return 2.*r/rm**2
 
-def Density(r,params,Rm):
-    rc = params[3]
-    rt = params[4]
+def Density(r,theta,params,Rm):
+    rca = params[3]
+    rta = params[4]
+    rcb = params[5]
+    rtb = params[6]
+
+    rc = (rca*rcb)/np.sqrt((rcb*np.cos(theta))**2+(rca*np.sin(theta))**2)
+    rt = (rta*rtb)/np.sqrt((rtb*np.cos(theta))**2+(rta*np.sin(theta))**2)
 
     ker = Kernel1(r,rc,rt)
     # In king's profile no objects is larger than tidal radius
@@ -105,22 +116,21 @@ class Module:
     """
     Chain for computing the likelihood 
     """
-    def __init__(self,cdts,Rcut,hyp,Dist,centre_init):
+    def __init__(self,cdts,Rmax,hyp,Dist,centre_init):
         """
         Constructor of the logposteriorModule
         """
-        rad,thet        = Deg2pc(cdts,centre_init,Dist)
-        c,r,t,self.Rmax = TruncSort(cdts,rad,thet,Rcut)
-        self.pro        = c[:,2]
-        self.cdts       = c[:,:2]
+        self.Rmax       = Rmax
+        self.pro        = cdts[:,2]
+        self.cdts       = cdts[:,:2]
         self.Dist       = Dist
         #------------- poisson ----------------
         self.quadrants  = [0,np.pi/2.0,np.pi,3.0*np.pi/2.0,2.0*np.pi]
-        self.poisson    = st.poisson(len(r)/4.0)
+        self.poisson    = st.poisson(len(self.pro)/4.0)
         #-------------- priors ----------------
         self.Prior_0    = st.norm(loc=centre_init[0],scale=hyp[0])
         self.Prior_1    = st.norm(loc=centre_init[1],scale=hyp[1])
-        self.Prior_2    = st.uniform(loc=-0.5*np.pi,scale=np.pi)
+        self.Prior_2    = st.uniform(loc=0,scale=np.pi)
         self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[2])
         self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[3])
         self.Prior_5    = st.halfcauchy(loc=0.01,scale=hyp[2])

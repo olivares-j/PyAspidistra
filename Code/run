@@ -1,8 +1,8 @@
 #! /usr/bin/bash
-LIST_MOD=( EFF GDP GKing OGKing King RGDP )
-#LIST_MOD=( OGKing )
-#LIST_EXT=( Ell Seg )
-LIST_EXT=( Ctr Ell Seg )
+# LIST_MOD=( EFF GDP GKing OGKing King RGDP )
+LIST_MOD=( King )
+LIST_EXT=( Ctr )
+# LIST_EXT=( Ctr Ell Seg)
 CUT=33
 for EXT in ${LIST_EXT[*]}
 do
