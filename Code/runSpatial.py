@@ -1,4 +1,3 @@
-#!/opt/anaconda2-5.2.0/envs/idp/bin/python
 '''
 Copyright 2017 Javier Olivares Romero
 
@@ -66,7 +65,7 @@ dir_analysis = dir_ + "Analysis/"
 
 file_members = dir_+'Data/'+'members_ALL.csv' # Put here the name of the members file.
 #"Make sure you have data in right order! (R.A., Dec. Probability, Band,e_band)")
-list_observables = ["RAJ2000","DEJ2000","probability","G","e_G"]
+list_observables = ["RAJ2000","DEJ2000","probability","G","G_error"]
 
 mag_limit = 25.0
 pro_limit = 0.5
