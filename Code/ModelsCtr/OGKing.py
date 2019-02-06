@@ -16,6 +16,7 @@ This file is part of PyAspidistra.
     You should have received a copy of the GNU General Public License
     along with PyAspidistra.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import numpy as np
 from numba import jit
@@ -24,10 +25,11 @@ from Functions import RotRadii
 from pandas import cut, value_counts
 import scipy.integrate as integrate
 
-print "OGKing Centre imported!"
+print("OGKing Centre imported!")
+
 lo = 1e-5
-a  = 0.55
-b  = 2.7
+a  = 0.418
+b  = 2.022
 
 @jit
 def Support(rc,rt):
@@ -41,6 +43,7 @@ def Kernel(r,params):
     rt = params[3]
     x  = (1.0 +  (r/rc)**(1./a))**-a
     y  = (1.0 + (rt/rc)**(1./a))**-a
+    # print(x,y)
     return (x-y)**b
 
 def cdf(r,theta,params,Rm):

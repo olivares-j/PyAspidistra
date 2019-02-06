@@ -16,6 +16,7 @@ This file is part of PyAspidistra.
     You should have received a copy of the GNU General Public License
     along with PyAspidistra.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import os
 import numpy as np
@@ -48,14 +49,15 @@ def my_format2(x):
 	return "{0:.0f}".format(x)
 
 #########################################################################################
-dir_  = "/home/jromero/Repos/PyAspidistra/"
+dir_  = os.getcwd().replace("Code","")
 
-# exte  = str(sys.argv[1])
+
 
 models = np.array(["EFF","GDP","GKing","King","OGKing","RGDP"])
 Rcuts  = [33]
 extes  = ["Ctr","Ell","Seg"]
 lstys  = ['-','--',':','-.']
+
 
 dir_out = dir_+'Analysis/BayesFactors'
 if not os.path.exists(dir_out): os.mkdir(dir_out)
@@ -89,9 +91,14 @@ for e,exte in enumerate(extes):
 		dir_ext = "Elliptic"
 
 		#---- parameters ac,dc,rc,rt,alpha,beta,gamma ----------
-		pnames     = ["$\\alpha_c$ [$^\circ$]","$\delta_c$ [$^\circ$]","$\phi$ [rad]",
-					"$r_{ca}$ [pc]","$r_{ta}$ [pc]","$r_{cb}$ [pc]","$r_{tb}$ [pc]","$\\alpha$",
+		pnames     = ["$\\alpha_c$","$\delta_c$","$\phi$",
+					"$r_{ca}$","$r_{ta}$","$r_{cb}$","$r_{tb}$","$\\alpha$",
 					"$\\beta$","$\gamma$","$\epsilon_{rc}$","$\epsilon_{rt}$"]
+
+		units      = ["[$^\circ$]","[$^\circ$]","[rad]",
+					"[pc]","[pc]","[pc]","[pc]","",
+					"","","",""]
+
 		idx_EFF    =    [1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0]
 		idx_GDP    =    [1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0]
 		idx_GKing  =    [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1]
@@ -140,7 +147,6 @@ for e,exte in enumerate(extes):
 
 		############ Compute bayes factors ####################
 		bf = np.empty((len(models),len(models)))
-		# print zs[:,0]
 		for i,z in enumerate(zs[:,0]):
 			bf[i] = np.exp(z-zs[:,0])
 
@@ -153,25 +159,37 @@ for e,exte in enumerate(extes):
 		fout = dir_out+"/BF_"+dir_ext+"_"+str(Rcut)+".txt"
 		df.to_latex(fout,index_names=True,float_format=my_format)
 
-		# ############### TABLE OF PARAMETERS ##############################
-		# If you pass in parameter labels and only one chain, you can also get parameter bounds
+		# ############### CHAIN CONSUMER ##############################
+		# ------------------ Start chains -------------------------------------
 		c = ChainConsumer()
 		for i,model in enumerate(models):
 			file_chain  = dir_+'Analysis/'+dir_ext+"/"+model+'_'+str(Rcut)+"/chain.csv"
-			chain  = pn.read_csv(file_chain).as_matrix()
+			chain  = np.array(pn.read_csv(file_chain))
 			idx_names = np.where(idx_MODS[i]==1)[0]
 			names = [pnames[i] for i in idx_names]
 			c.add_chain(chain,parameters=names,name=model)
 
 		c.configure(statistics="cumulative")
 
-		table = c.analysis.get_latex_table(caption="Results for the tested models", label="tab:example")
+		#--------------- Plot --------------------------------------
+		plt.figure()
+		c.plotter.plot_summary()
 
-		# # -------- Writes table to file-------------------------
+		plt.savefig(dir_out+"/Models_"+str(Rcut)+".pdf", bbox_inches='tight')  # saves the current figure into a pdf page
+		plt.close()
+		#------------------------------------------------------------------------------
+
+		#------------------------ Table ----------------------------------------------------------------
+		# print(c.analysis.get_summary())
+		table = c.analysis.get_latex_table(caption="Summary", label="tab:summary")
+
+		#---------------- Writes table to file-------------------------
 		fout = dir_out+"/Parameters_"+dir_ext+"_"+str(Rcut)+".tex"
 		
 		with open(fout, "w") as text_file:
 			text_file.write(table)
+		#-------------------------------------------------------------------------------------------------
+		##################################################################################################3
 
 
 evs = evs.reshape((2,-1))
@@ -191,9 +209,10 @@ for r,Rcut in enumerate(Rcuts):
 	fout = dir_out+"/BF_All_"+str(Rcut)+".txt"
 	df.to_latex(fout,index_names=True,float_format=my_format,multirow=True)
 
-pdf = PdfPages(dir_out+"/Nsys_"+str(Rcut)+".pdf")
-plt.figure()
 
+##################### NUMBER OF SYSTEMS ###################################################
+
+plt.figure()
 for i,model in enumerate(["GKing","King","OGKing"]):
 	for e,ext in enumerate(extes):
 		for r,Rcut in enumerate(Rcuts):
@@ -202,11 +221,11 @@ for i,model in enumerate(["GKing","King","OGKing"]):
 plt.ylabel("Density")
 plt.xlabel("Total number of systems")
 plt.yscale("log")
-plt.ylim(ymin=1e-5)
+# plt.ylim(ymin=1e-5)
 plt.legend()
-pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
+plt.savefig(dir_out+"/Nsys_"+str(Rcut)+".pdf",bbox_inches='tight')  # saves the current figure into a pdf page
 plt.close()
-pdf.close()
+
 
 df = pn.DataFrame(Nrtm.reshape(len(extes),3),columns=["GKing","King","OGKing"])
 df = df.rename(lambda x:extes[x])
@@ -215,7 +234,7 @@ df = df.rename(lambda x:extes[x])
 fout = dir_out+"/Nsys_"+str(Rcut)+".txt"
 df.to_latex(fout,index_names=True,float_format=my_format2,multirow=True)
 
-#------masses
+################################## MASS ##############################################3
 
 pdf = PdfPages(dir_out+"/Msys_"+str(Rcut)+".pdf")
 plt.figure()

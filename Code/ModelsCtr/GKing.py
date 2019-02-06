@@ -16,6 +16,7 @@ This file is part of PyAspidistra.
     You should have received a copy of the GNU General Public License
     along with PyAspidistra.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import numpy as np
 from numba import jit
@@ -24,7 +25,7 @@ from Functions import RotRadii
 from pandas import cut, value_counts
 
 import scipy.integrate as integrate
-print "GKing Centre imported!"
+print("GKing Centre imported!")
 
 lo     = 1e-5
 

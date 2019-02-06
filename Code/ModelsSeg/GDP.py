@@ -16,6 +16,7 @@ This file is part of PyAspidistra.
     You should have received a copy of the GNU General Public License
     along with PyAspidistra.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import numpy as np
 from numba import jit
@@ -24,8 +25,6 @@ from Functions import RotRadii
 from pandas import cut, value_counts
 
 from scipy.special import hyp2f1
-
-print "GDP Segregated imported!"
 
 @jit
 def Support(rca,rcb,a,b,g):
@@ -127,7 +126,7 @@ class Module:
         kde             = st.gaussian_kde(band)
         x               = np.linspace(np.min(band),np.max(band),num=1000)
         self.mode       = x[kde(x).argmax()]
-        print "Mode of band at ",self.mode
+        print("Mode of band at ",self.mode)
 
         #---- repleace NANs by mode -----
         idnv            = np.setdiff1d(np.arange(len(band_all)),idv)
@@ -144,7 +143,7 @@ class Module:
         self.Prior_6    = st.truncexpon(b=hyp[3],loc=0.01,scale=hyp[4])
         self.Prior_7    = st.truncexpon(b=2.0,loc=0.01,scale=hyp[4])
         self.Prior_8    = st.norm(loc=hyp[5],scale=hyp[6])
-        print("Module Initialized")
+        print("Segregated GDP module initialized")
 
     def Priors(self,params, ndim, nparams):
         #------- Uniform Priors -------

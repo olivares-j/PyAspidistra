@@ -41,8 +41,8 @@ from scipy.optimize import brentq
 import scipy.stats as st
 from Functions import *
 
-from astroML.plotting import setup_text_plots
-setup_text_plots(fontsize=18, usetex=True)
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
 
 nargs = len(sys.argv)
 if nargs == 4:
@@ -54,7 +54,7 @@ Rcut  = float(sys.argv[2-na])
 exte  = str(sys.argv[3-na])
 
 ############ GLOBAL VARIABLES #################################################
-dir_  = "/home/jromero/Repos/PyAspidistra/"  # Specify the full path to the Aspidistra path
+dir_  = os.getcwd().replace("Code","") # Specify the full path to the Aspidistra path
 real  = True
 Ntot  = 10000  # Number of stars if synthetic (real = False)
 
@@ -69,6 +69,8 @@ list_observables = ["RAJ2000","DEJ2000","probability","G","G_error"]
 
 mag_limit = 25.0
 pro_limit = 0.5
+
+quantiles = [0.16,0.5,0.84]
 
 
 #-------------------- MODEL PRIORS -----------------------------------------------
@@ -304,13 +306,13 @@ ana = pymultinest.Analyzer(n_params = n_params, outputfiles_basename=dir_out+'/0
 summary = ana.get_stats()
 samples = ana.get_data()[:,2:]
 
+#----------------- MAPS------------------------------
 # MAP   = np.array(summary["modes"][0]["maximum"])
-# MAP   = np.array(summary["modes"][0]["maximum a posterior"])
+MAP   = np.array(summary["modes"][0]["maximum a posterior"])
 # sigma = np.array(summary["modes"][0]["sigma"])
 # MAP   = np.array(summary["modes"][0]["mean"])
-MAP   = fMAP(samples)
-print(MAP)
-# print(sigma)
+# MAP   = fMAP(samples)
+
 print()
 print("-" * 30, 'ANALYSIS', "-" * 30)
 print("Global Evidence:\n\t%.15e +- %.15e" % (summary['nested sampling global log-evidence'], 
@@ -336,13 +338,16 @@ if not exte == "None":
 
 if exte == "Ell" or exte == "Seg":
 	radii,theta        = RotRadii(cdts,centre,Dist,MAP[2])
-	_,radii,theta,Rmax = TruncSort(cdts,radii,theta,Rcut)
+	cdts,radii,theta,Rmax = TruncSort(cdts,radii,theta,Rcut)
 else:
 	radii,theta        = RotRadii(cdts,centre,Dist,0.0)
-	_,radii,theta,Rmax = TruncSort(cdts,radii,theta,Rcut)
+	cdts,radii,theta,Rmax = TruncSort(cdts,radii,theta,Rcut)
 
 Nr,bins,dens = DenNum(radii,Rmax,nbins=40)
 x = np.linspace(0,Rmax,50)
+
+
+lim_dens = 0.5*np.min(dens[dens != 0.0]),1.1*np.max(dens)
 
 
 ################## PLOTS ###############################################################
@@ -357,8 +362,8 @@ for s,par in enumerate(samp):
 	plt.plot(x,mod.Number(x,np.pi/2,par,Rmax,np.max(Nr)),lw=1,color="orange",alpha=0.2,zorder=1)
 plt.plot(x,mod.Number(x,0,MAP,Rmax,np.max(Nr)),linestyle=":",lw=1,color="red",zorder=2,label=r"$r_{ca}$")
 plt.plot(x,mod.Number(x,np.pi/2,MAP,Rmax,np.max(Nr)),linestyle="--",lw=1,color="red",zorder=2,label=r"$r_{cb}$")
-plt.ylim((0,1.1*max(Nr)))
-plt.xlim((0,Rmax))
+plt.ylim(0,1.1*max(Nr))
+plt.xlim(0,Rmax)
 plt.ylabel("Number of stars")
 plt.xlabel("Radius [pc]")
 # plt.legend(loc="best")
@@ -376,7 +381,7 @@ plt.plot(x,mod.Density(x,np.pi/2,MAP,Rmax),linestyle="--", linewidth=3,color="re
 plt.ylabel("Density [stars $\cdot$ pc$^{-2}$]")
 plt.xlabel("Radius [pc]")
 plt.yscale("log")
-plt.ylim((0.9*(dens[-1,0]-dens[-1,1]),1.2*(dens[0,0]+dens[0,1])))
+plt.ylim(lim_dens)
 plt.xlim((0,Rmax))
 pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 plt.close()
@@ -465,12 +470,12 @@ plt.rcParams["figure.figsize"] = figsize
 if real :
 	figure = corner.corner(samples, labels=namepar,truths=MAP,truth_color="red",range=rng,
 		reverse=False,plot_datapoints=False,fill_contours=True,
-		quantiles=[0.16, 0.5, 0.84],
+		quantiles=quantiles,
         show_titles=True, title_kwargs={"fontsize": 12})
 else:
 	figure = corner.corner(samples, labels=namepar,truths=params,truth_color="blue",range=rng,
 		reverse=False,plot_datapoints=False,fill_contours=True,
-		quantiles=[0.16, 0.5, 0.84],
+		quantiles=quantiles,
         show_titles=True, title_kwargs={"fontsize": 12})
 
 pdf.savefig(bbox_inches='tight')
@@ -496,16 +501,6 @@ if exte == "Seg":
 	dlt_m  = np.mean(cdts[idm,3]) - Module.mode
 	dlt_u  = np.mean(cdts[idu,3]) - Module.mode
 
-	# plt.figure()
-	# plt.errorbar(radii[idl],cdts[idl,3],yerr=cdts[idl,4],fmt="o",color="green",ecolor="grey",lw=1,ms=2)
-	# plt.errorbar(radii[idm],cdts[idm,3],yerr=cdts[idm,4],fmt="o",color="cyan",ecolor="grey",lw=1,ms=2)
-	# plt.errorbar(radii[idu],cdts[idu,3],yerr=cdts[idu,4],fmt="o",color="magenta",ecolor="grey",lw=1,ms=2)
-	# plt.plot(x,Module.mode+(x*MAP[7]))
-	# plt.xlabel("Radius [pc]")
-	# plt.ylabel('J [mag]')
-	# pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
-	# plt.close()
-
 	
 
 	for s,par in enumerate(samp):
@@ -526,7 +521,7 @@ if exte == "Seg":
 
 	plt.ylabel("Density [stars $\cdot$ pc$^{-2}$]")
 	plt.xlabel("Radius [pc]")
-	plt.ylim(1e-3,0.5)
+	plt.ylim(lim_dens)
 	plt.yscale("log")
 	pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 	plt.close()
@@ -534,23 +529,23 @@ if exte == "Seg":
 #######################  ELLIPTICITIES ##############################
 if exte == "Ell" or exte == "Seg":
 	#--------- computes ellipticity of core radius
-	eps_rc     = np.array(map(Epsilon,samples[:,id_rc]))
+	eps_rc     = np.array(Epsilon(samples[:,id_rc].T))
 	samples    = np.column_stack((samples,eps_rc))
 	epsrc_mode = st.mode(eps_rc)[0]
-	percent    = np.percentile(eps_rc,[14,50,86])
+	quanta     = np.quantile(eps_rc,quantiles)
 	nerc,bins,_= plt.hist(eps_rc,30, density=True,
 					ec="black",histtype='step', linestyle='solid',label="$\epsilon_{rc}$")
-	plt.annotate('$\epsilon_{rc}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(percent) ),[0.1,0.95],xycoords="axes fraction")
+	plt.annotate('$\epsilon_{rc}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(quanta) ),[0.1,0.95],xycoords="axes fraction")
 	epsilons = np.array([epsrc_mode])
 
 	if model in ["GKing","King","OGKing"]:
-		eps_rt      = np.array(map(Epsilon,samples[:,id_rt]))
+		eps_rt      = np.array(Epsilon(samples[:,id_rt].T))
 		samples     = np.column_stack((samples,eps_rt))
 		epsrt_mode  = st.mode(eps_rt)[0]
-		percent     = np.percentile(eps_rt,[14,50,86])
+		quanta     = np.quantile(eps_rt,quantiles)
 		nert,bins,_ = plt.hist(eps_rt,30, density=True, range=[0,1], 
 						ec="black",histtype='step', linestyle='dashed',label="$\epsilon_{rt}$")
-		plt.annotate('$\epsilon_{rt}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(percent) ),[0.7,0.95],xycoords="axes fraction")
+		plt.annotate('$\epsilon_{rt}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(quanta) ),[0.7,0.95],xycoords="axes fraction")
 		epsilons = np.array([epsrc_mode,epsrt_mode]).reshape((1,2))
 
 	#---------------------------
@@ -571,78 +566,34 @@ if exte == "Ell" or exte == "Seg":
 
 	MAP = np.append(MAP,epsilons)
 
-#--------- computes the distribution of number of stars -----
+#-------------- Number of systems ----------------------------------
 if model in ["GKing","King","OGKing"]:
 	Nrt = np.empty(len(samples))
 	for s,par in enumerate(samples):
 		Nrt[s] = mod.Number(par[id_rt[0]],0,par,Rmax,np.max(Nr))
-	Nrt_mode = st.mode(eps_rc)[0]
-	percent  = np.percentile(Nrt,[14,50,86])
+	quanta     = np.quantile(Nrt,quantiles)
 	plt.hist(Nrt,50, density=True, ec="black",histtype='step')
 	plt.ylabel("Density")
 	plt.xlabel("Number of stars within $r_t$")
-	plt.annotate('Number = [%3.0f,%3.0f,%3.0f]' % ( tuple(percent) ),(0.5,0.8),xycoords="axes fraction")
-	plt.yscale("log")
+	plt.annotate('Number of systems = [%3.0f,%3.0f,%3.0f]' % ( tuple(quanta) ),(0.5,0.8),xycoords="axes fraction")
+	# plt.xlim(quanta[1]-3*quanta[0],quanta[1]+3*quanta[2])
 	pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 	plt.close()
 
-	# print(bins.shape)
-
-	Nrt        = Nrt[np.where(Nrt < 1e4)[0]]
-	kde        = st.gaussian_kde(Nrt)
-	x          = np.linspace(np.min(Nrt),np.max(Nrt),num=1000)
-	Nrt_mode   = np.array(x[kde(x).argmax()]).reshape((1,))
-	bins       = np.linspace(0.9*np.min(Nrt),1.1*np.max(Nrt),num=50)   
-	nrt,_,     = np.histogram(Nrt,bins=bins)
-	nrt        = np.append(nrt,0)
-
-	f_e = file(dir_out+"/"+model+"_numbers.txt", 'w')
-	np.savetxt(f_e, Nrt_mode,fmt=str('%2.3f'),delimiter=" ")
-	np.savetxt(f_e, np.c_[bins,nrt],fmt=str('%2.5e'),delimiter=" ")
-	f_e.close()
-#--------- computes the distribution of total mass -----
-	bins          = np.linspace(0,1e4,num=100) 
-	massrj        = MassRj(samples[:,id_rt[0]])
-	massrj        = massrj[np.where(massrj < 1e4)[0]]
-	kde           = st.gaussian_kde(massrj)
-	x             = np.linspace(np.min(massrj),np.max(massrj),num=1000)
-	massrj_mode   = np.array(x[kde(x).argmax()]).reshape((1,))
-
-	nmr,_,_       = plt.hist(massrj,bins=bins, density=True,ec="black",ls="dashed",histtype='step',label="$M_{rt}$")
-	nmr           = np.append(nmr,0)
-	mass_mode     = np.array([massrj_mode]).reshape((1,1))
-	nms           = np.c_[bins,nmr]
-
-	  
-	if not exte == "Ctr":
-		massep        = MassEps(samples[:,id_rt[0]],eps_rt)
-		massep        = massep[np.where(massep < 1e4)[0]]
-		kde           = st.gaussian_kde(massep)
-		x             = np.linspace(np.min(massep),np.max(massep),num=1000)
-		massep_mode   = np.array(x[kde(x).argmax()]).reshape((1,))
-		nme,_,_       = plt.hist(massep,bins=bins, density=True,ec="black",histtype='step',label="$M_{\epsilon}$")
-		nme           = np.append(nme,0)
-		mass_mode     = np.array([massrj_mode,massep_mode]).reshape((1,2))
-		nms           = np.c_[bins,nmr,nme]
-
-	plt.legend()
+#--------- Total mass -----
+	
+	LogMassrj  = np.log10(MassRj(samples[:,id_rt[0]]))
+	quanta  = np.quantile(LogMassrj,quantiles)
+	plt.hist(LogMassrj,50, density=True, ec="black",histtype='step')
 	plt.ylabel("Density")
-	plt.xlabel("Total mass [$M_\odot$]")
-	plt.yscale("log")
-	# plt.ylim(1e-5,1)
+	plt.xlabel("Log Mass [$M_\odot$]")
+	plt.annotate('Log Mass = [%3.2f,%3.2f,%3.2f]' % ( tuple(quanta) ),(0.5,0.8),xycoords="axes fraction")
+	# plt.yscale("log")
 	pdf.savefig(bbox_inches='tight')  # saves the current figure into a pdf page
 	plt.close()
-
-	f_e = file(dir_out+"/"+model+"_mass.txt", 'w')
-	np.savetxt(f_e, mass_mode,fmt=str('%2.3f'),delimiter=" ")
-	np.savetxt(f_e, nms,fmt=str('%2.5e'),delimiter=" ")
-	f_e.close()
 
 pdf.close()
 
-
-#------------------- saves chain -----------
-np.savetxt(dir_out+'/chain.csv',samples, delimiter=",")
 
 #------------ END --------------------------------
 

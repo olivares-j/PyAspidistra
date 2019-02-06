@@ -16,6 +16,7 @@ This file is part of PyAspidistra.
     You should have received a copy of the GNU General Public License
     along with PyAspidistra.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import, unicode_literals, print_function
 import numpy as np
 from numba import jit
 from sklearn.neighbors import NearestNeighbors as kNN
@@ -35,8 +36,8 @@ def TruncSort(cdts,r,t,Rcut):
 	t      = t[idx] 
 	cdts   = cdts[idx]
 	Rmax   = np.max(r)
-	print "Maximum radius: ",Rmax
-	print "Removed objects: ",N-len(r)
+	print("Maximum radius: ",Rmax)
+	print("Removed objects: ",N-len(r))
 	return cdts,r,t,Rmax
 
 def DenNum(r,Rmax,nbins=41):

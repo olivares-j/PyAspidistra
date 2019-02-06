@@ -16,6 +16,7 @@ This file is part of PyAspidistra.
     You should have received a copy of the GNU General Public License
     along with PyAspidistra.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import numpy as np
 import math
@@ -23,8 +24,6 @@ from numba import jit
 import scipy.stats as st
 from Functions import RotRadii
 from pandas import cut, value_counts
-
-print "EFF Elliptic imported!"
 
 @jit
 def Support(rca,rcb,g):
@@ -100,7 +99,7 @@ class Module:
         self.Prior_3    = st.halfcauchy(loc=0.01,scale=hyp[2])
         self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[2])
         self.Prior_5    = st.truncexpon(b=hyp[3],loc=2.01,scale=hyp[4])
-        print "Module Initialized"
+        print("EFF Elliptic module initialized")
 
     def Priors(self,params, ndim, nparams):
         params[0]  = self.Prior_0.ppf(params[0])
