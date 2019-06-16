@@ -18,7 +18,6 @@ This file is part of PyAspidistra.
 '''
 from __future__ import absolute_import, unicode_literals, print_function
 import sys
-import sys
 import numpy as np
 from numba import jit
 import scipy.stats as st
