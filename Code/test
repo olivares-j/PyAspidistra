@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+
+echo "Hello"
+echo $1
+echo $2
+echo $3
+which python
+echo $PYTHONPATH
+python -c "import corner; print(corner.__version__)"
