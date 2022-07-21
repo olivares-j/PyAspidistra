@@ -16,6 +16,7 @@ This file is part of PyAspidistra.
     You should have received a copy of the GNU General Public License
     along with PyAspidistra.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import numpy as np
 from numba import jit
@@ -25,7 +26,7 @@ from pandas import cut, value_counts
 
 from scipy.special import hyp2f1
 
-print "RGDP Centre imported!"
+print("RGDP Centre imported!")
 
 @jit
 def Support(rc,a,b):

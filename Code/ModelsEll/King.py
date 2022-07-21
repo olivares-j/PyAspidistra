@@ -16,14 +16,13 @@ This file is part of PyAspidistra.
     You should have received a copy of the GNU General Public License
     along with PyAspidistra.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import numpy as np
 from numba import jit
 import scipy.stats as st
 from Functions import RotRadii
 from pandas import cut, value_counts
-
-print "King Elliptic imported!"
 
 @jit
 def Support(rca,rta,rcb,rtb):
@@ -135,7 +134,7 @@ class Module:
         self.Prior_4    = st.halfcauchy(loc=0.01,scale=hyp[3])
         self.Prior_5    = st.halfcauchy(loc=0.01,scale=hyp[2])
         self.Prior_6    = st.halfcauchy(loc=0.01,scale=hyp[3])
-        print "Module Initialized"
+        print("Elliptic King module initialized")
 
     def Priors(self,params, ndim, nparams):
         params[0]  = self.Prior_0.ppf(params[0])
@@ -178,7 +177,7 @@ class Module:
         ids      = np.where(rts < self.Rmax)[0]
         ups[ids] = rts[ids]
 
-        cte = np.array(map(NormCte,np.c_[rcs,rts,ups]))
+        cte = np.array(NormCte(np.c_[rcs,rts,ups].T))
 
         k        = 2.0/cte
 

@@ -20,9 +20,9 @@ import sys
 import numpy as np
 from numba import jit
 import scipy.stats as st
-from Functions import Deg2pc,TruncSort
+from Functions import RotRadii,TruncSort
 
-print "EFF NoCentre imported!"
+print("EFF NoCentre imported")
 
 @jit
 def Support(rc,g):
@@ -32,11 +32,11 @@ def Support(rc,g):
     return True
 
 @jit
-def Number(r,params,Rm,Nstr):
-    return Nstr*cdf(r,params,Rm)
+def Number(r,theta,params,Rm,Nstr):
+    return Nstr*cdf(r,theta,params,Rm)
 
 @jit
-def cdf(r,params,Rm):
+def cdf(r,theta,params,Rm):
     rc = params[0]
     g  = params[1]
     w  = r**2  + rc**2
@@ -55,7 +55,7 @@ def LikeField(r,rm):
     return 2.0*r/(rm**2)
 
 @jit
-def Density(r,params,Rm):
+def Density(r,theta,params,Rm):
     rc = params[0]
     g  = params[1]
     y = rc**2 + Rm**2
@@ -72,7 +72,7 @@ class Module:
         """
         Constructor of the logposteriorModule
         """
-        rad,thet        = Deg2pc(cdts,centre,Dist)
+        rad,thet        = RotRadii(cdts,centre,Dist,0)
         c,r,t,self.Rmax = TruncSort(cdts,rad,thet,Rcut)
         self.pro        = c[:,2]
         self.rad        = r
@@ -80,7 +80,7 @@ class Module:
         self.Prior_0    = st.halfcauchy(loc=0.01,scale=hyp[0])
         self.Prior_1    = st.halfcauchy(loc=2.001,scale=hyp[1])
                         
-        print "Module Initialized"
+        print("Module Initialized")
 
     def Priors(self,params, ndim, nparams):
         #-------- Uniform Priors -------

@@ -16,6 +16,7 @@ This file is part of PyAspidistra.
     You should have received a copy of the GNU General Public License
     along with PyAspidistra.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import numpy as np
 from numba import jit
@@ -24,7 +25,6 @@ from Functions import RotRadii
 from pandas import cut, value_counts
 
 import scipy.integrate as integrate
-print "GKing Elliptic imported!"
 
 lo     = 1e-5
 
@@ -137,7 +137,7 @@ class Module:
         self.Prior_6    = st.halfcauchy(loc=0.01,scale=hyp[3])
         self.Prior_7    = st.truncexpon(b=hyp[4],loc=0.01,scale=hyp[5])
         self.Prior_8    = st.truncexpon(b=hyp[4],loc=0.01,scale=hyp[5])
-        print("Module Initialized")
+        print("Generalized King Elliptic module initialized")
 
     def Priors(self,params, ndim, nparams):
         params[0]  = self.Prior_0.ppf(params[0])
@@ -186,7 +186,9 @@ class Module:
         aes      = a*np.ones_like(rts)
         bes      = b*np.ones_like(rts)
 
-        cte = np.array(map(NormCte,np.c_[rcs,rts,aes,bes,ups]))
+        aux = np.c_[rcs,rts,aes,bes,ups]
+
+        cte = np.array(list(map(NormCte,aux)))
 
         k = 1.0/cte
 

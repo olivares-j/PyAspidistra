@@ -1,14 +1,13 @@
-#! /usr/bin/bash
-# LIST_MOD=( EFF GDP GKing OGKing King RGDP )
-LIST_MOD=( King )
-LIST_EXT=( Ctr )
+#! /bin/bash
+LIST_MOD=( EFF GDP RGDP King GKing OGKing )
+LIST_EXT=( Seg )
 # LIST_EXT=( Ctr Ell Seg)
 CUT=33
 for EXT in ${LIST_EXT[*]}
 do
 	for MOD in ${LIST_MOD[*]}
 		do
-		python runSpatial.py $MOD $CUT $EXT &
+		python3 runSpatial.py $MOD $CUT $EXT &
 		# echo $MOD,$CUT,$EXT
 		sleep 1
 	done

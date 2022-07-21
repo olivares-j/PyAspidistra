@@ -16,6 +16,7 @@ This file is part of PyAspidistra.
     You should have received a copy of the GNU General Public License
     along with PyAspidistra.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import numpy as np
 from numba import jit
@@ -25,7 +26,6 @@ from pandas import cut, value_counts
 
 from scipy.special import hyp2f1
 
-print "GDP Elliptic imported!"
 
 @jit
 def Support(rca,rcb,a,b,g):
@@ -121,7 +121,7 @@ class Module:
         self.Prior_5    = st.truncexpon(b=hyp[3],loc=0.01,scale=hyp[4])
         self.Prior_6    = st.truncexpon(b=hyp[3],loc=0.01,scale=hyp[4])
         self.Prior_7    = st.truncexpon(b=1.99,loc=0.01,scale=hyp[4])
-        print("Module Initialized")
+        print("GDP Elliptic module initialized")
 
     def Priors(self,params, ndim, nparams):
         #------- Uniform Priors -------

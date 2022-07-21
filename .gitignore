@@ -1,3 +1,9 @@
+# Directories
+############
+Data
+NGC6774
+NGC2244
+
 # Compiled source #
 ###################
 *.com
@@ -45,6 +51,7 @@ Thumbs.db
 
 # Directories #
 ###############
-Analysis/
+Analysis/*
 Code/Models/old
 Code/Log
+

@@ -16,6 +16,7 @@ This file is part of PyAspidistra.
     You should have received a copy of the GNU General Public License
     along with PyAspidistra.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import, unicode_literals, print_function
 import sys
 import numpy as np
 from numba import jit
@@ -24,7 +25,6 @@ from Functions import RotRadii
 from pandas import cut, value_counts
 
 import scipy.integrate as integrate
-print "GKing Segregated imported!"
 
 lo     = 1e-5
 
@@ -139,7 +139,7 @@ class Module:
         kde             = st.gaussian_kde(band)
         x               = np.linspace(np.min(band),np.max(band),num=1000)
         self.mode       = x[kde(x).argmax()]
-        print "Mode of band at ",self.mode
+        print("Mode of band at ",self.mode)
 
         #---- repleace NANs by mode -----
         idnv            = np.setdiff1d(np.arange(len(band_all)),idv)
@@ -156,7 +156,7 @@ class Module:
         self.Prior_7    = st.truncexpon(b=hyp[4],loc=0.01,scale=hyp[5])
         self.Prior_8    = st.truncexpon(b=hyp[4],loc=0.01,scale=hyp[5])
         self.Prior_9    = st.norm(loc=hyp[6],scale=hyp[7])
-        print("Module Initialized")
+        print("Segregated GKing module initialized")
 
     def Priors(self,params, ndim, nparams):
         params[0]  = self.Prior_0.ppf(params[0])
@@ -216,7 +216,7 @@ class Module:
         aes      = a*np.ones_like(rts)
         bes      = b*np.ones_like(rts)
 
-        cte = np.array(map(NormCte,np.c_[rcs,rts,aes,bes,ups]))
+        cte = np.array(list(map(NormCte,np.c_[rcs,rts,aes,bes,ups])))
 
         k = 1.0/cte
 

@@ -39,186 +39,25 @@ from matplotlib.patches import Ellipse
 import pandas as pd
 from scipy.optimize import brentq
 import scipy.stats as st
-from Functions import *
+from Functions import TruncSort,DenNum,RotRadii,fMAP,fCovar,Epsilon,MassRj,MassEps
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
-nargs = len(sys.argv)
-if nargs == 4:
-	na = 0
-if nargs == 3:
-	na = 1
-model = str(sys.argv[1-na])
-Rcut  = float(sys.argv[2-na])
-exte  = str(sys.argv[3-na])
-
-############ GLOBAL VARIABLES #################################################
-dir_  = os.getcwd().replace("Code","") # Specify the full path to the Aspidistra path
-real  = True
-Ntot  = 10000  # Number of stars if synthetic (real = False)
-
-Dist    = 309
-centre  = [289.10,-16.38]
-
-dir_analysis = dir_ + "Analysis/"
-
-file_members = dir_+'Data/'+'members_ALL.csv' # Put here the name of the members file.
-#"Make sure you have data in right order! (R.A., Dec. Probability, Band,e_band)")
-list_observables = ["RAJ2000","DEJ2000","probability","G","G_error"]
-
-mag_limit = 25.0
-pro_limit = 0.5
-
-quantiles = [0.16,0.5,0.84]
-
-
-#-------------------- MODEL PRIORS -----------------------------------------------
-texp = 100.0 # truncation of exponential prior for exponents
-sexp = 1.0  # scale of  ""      """
-src  = 1.0  # scale of half-cauchy for core radius
-srt  = 10.0 #   ""        """            tidal radius
-
-
-if model == "EFF":
-	if exte == "None" or exte =="Ctr":
-		#----------------------------------
-		namepar = ["$r_c$ [pc]","$\gamma$"]
-		params  = [2.0,3.0]
-		rng     = [[0,4],[2,4]]
-	if exte == "Ell" or exte =="Seg":
-		#--------- Initial parameters --------------
-		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{cb}$ [pc]","$\gamma$"]
-		params  = [np.pi/4,5.0,1.0,3.0]
-		rng     = [[0,np.pi],[0,10],[0,5],[2,4]]
-		id_rc   = [3,4]
-	hyp     = np.array([src,texp,sexp])
-
-if model == "GDP":
-	if exte == "None" or exte =="Ctr":
-	#--------- Initial parameters --------------
-		namepar = ["$r_c$ [pc]","$\\alpha$","$\\beta$","$\gamma$"]
-		params  = [2.0,0.5,2.0,0.1]
-		rng     = [[0,10],[0,2],[0,10],[0,1]]
-
-	if exte == "Ell" or exte =="Seg":
-		#--------- Initial parameters --------------
-		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{cb}$ [pc]",
-					"$\\alpha$","$\\beta$","$\gamma$"]
-		params  = [np.pi/4,2.0,2.0,0.5,2.0,0.0]
-		rng     = [[0,np.pi],[0,10],[0,10],[0,2],[0,10],[0,2]]
-		id_rc   = [3,4]
-	hyp     = np.array([src,texp,sexp])
-
-if model == "GKing":
-	if exte == "None" or exte =="Ctr":
-		#--------- Initial parameters --------------
-		namepar = ["$r_c$ [pc]","$r_t$ [pc]","$\\alpha$","$\\beta$"]
-		params  = [2.0,30.0,0.5,2.0]
-		rng     = [[0,5],[10,100],[0,2],[0,5]]
-		id_rt   = [3]
-
-	if exte == "Ell" or exte =="Seg":
-
-		#--------- Initial parameters --------------
-		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]", 
-					"$r_{cb}$ [pc]","$r_{tb}$ [pc]","$\\alpha$","$\\beta$"]
-		params  = [np.pi/4,2.0,20.0,2.0,20.0,0.5,2.0]
-		rng     = [[0,np.pi],[0,5],[10,100],[0,5],[10,100],[0,2],[0,5]]
-		id_rc   = [3,5]
-		id_rt   = [4,6]
-	hyp     = np.array([src,srt,texp,sexp])
-
-if model == "King":
-	if exte == "None" or exte =="Ctr":
-		#--------- Initial parameters --------------
-		namepar = ["$r_c$ [pc]", "$r_t$ [pc]"]
-		params  = [2.0,30.0]
-		rng     = [[0,5],[10,100]]
-		id_rt   = [3]
-	if exte == "Ell" or exte =="Seg":
-		#--------- Initial parameters --------------
-		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]",
-					 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
-		params  = [np.pi/4,2.0,30.0,2.0,30.0]
-		rng     = [[0,np.pi],[0,5],[10,100],[0,5],[10,100]]
-		id_rc   = [3,5]
-		id_rt   = [4,6]
-	hyp     = np.array([src,srt])
-
-if model == "OGKing":
-	if exte == "None" or exte =="Ctr":
-		#--------- Initial parameters --------------
-		namepar = ["$r_c$ [pc]","$r_t$ [pc]"]
-		params  = [2.0,30.0]
-		rng     = [[0,5],[10,100]]
-		id_rt   = [3]
-
-	if exte == "Ell" or exte =="Seg":
-		#--------- Initial parameters --------------
-		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{ta}$ [pc]",
-					 "$r_{cb}$ [pc]","$r_{tb}$ [pc]"]
-		params  = [np.pi/4,2.0,30.0,2.0,30.0]
-		rng     = [[0,np.pi],[0,4],[10,100],[0,4],[10,100]]
-		id_rc   = [3,5]
-		id_rt   = [4,6]
-	hyp     = np.array([src,srt])
-
-if model == "RGDP":
-	if exte == "None" or exte =="Ctr":
-		#--------- Initial parameters --------------
-		namepar = ["$r_c$ [pc]","$\\alpha$","$\\beta$"]
-		params  = [2.0,0.5,2.0]
-		rng     = [[0,10],[0,2],[0,10]]
-
-	if exte == "Ell" or exte =="Seg":
-		#--------- Initial parameters --------------
-		namepar = ["$\phi$ [radians]","$r_{ca}$ [pc]","$r_{cb}$ [pc]",
-					"$\\alpha$","$\\beta$"]
-		params  = [np.pi/4,2.0,2.0,0.5,2.0]
-		rng     = [[0,np.pi],[0,10],[0,10],[0,2],[0,10]]
-		id_rc   = [3,4]
-	hyp     = np.array([src,texp,sexp])
-
-
-#------------parameters of centre ----------------------------------
-nameparCtr = ["$\\alpha_c\ \ [^\circ]$","$\\delta_c\ \ [^\circ]$"]
-hypCtr    = np.array([1.0,1.0])
-rngCtr    = [[centre[0]-1.0,centre[0]+1.0],[centre[1]-1.0,centre[1]+1.0]]
-######### Parameter of luminosity segregation #########
-nameSg    = ["$\kappa$ [pc$\cdot \\rm{mag}^{-1}$]"]
-hypSg     = np.array([0,0.5]) # Normal prior at hypSg[0] with scale hypSg[1]
-rngSg     = [[-0.6,1.2]]
-
-
-#####################################################
-
-############################################################
-
-#------- concatenate parameters--------
-if not exte == "None" :
-	namepar = nameparCtr + namepar
-	params  = np.append(centre,params)
-	hyp     = np.append(hypCtr,hyp)
-	rng     = sum([rngCtr,rng],[])
-
-if exte == "Seg":
-	namepar = namepar + nameSg
-	hyp     = np.append(hyp,hypSg)
-	rng     = sum([rng,rngSg],[])
+from globals_NGC2244 import *
 
 #------ Determine dext and fext -----
 
-if exte == "None":
+if profile["extension"] == "None":
 	dext = "Models"
 	fext = "NoCentre/"
-elif exte == "Ctr":
+elif profile["extension"] == "Ctr":
 	dext = "ModelsCtr"
 	fext = "Centre/"
-elif exte == "Ell":
+elif profile["extension"] == "Ell":
 	dext = "ModelsEll"
 	fext = "Elliptic/"
-elif exte == "Seg":
+elif profile["extension"] == "Seg":
 	dext = "ModelsSeg"
 	fext = "Segregated/"
 else :
@@ -227,13 +66,13 @@ else :
 	sys.exit()
 ###############################################################################
 
-#------ Creates directory of extension -------
+#------ Creates directory of profile["extension"]nsion -------
 dir_fext   = dir_analysis+fext
 if not os.path.exists(dir_fext): os.mkdir(dir_fext)
 
 
 ############## Directory of outputs ##################################################
-dir_out  = dir_fext+model+'_'+str(int(Rcut))
+dir_out  = dir_fext+profile["model"]+'_'+str(int(Rcut))
 if not real :
 	dir_out  = dir_out+'_'+str(Ntot)
 	fsyn     = dir_out+'/0-data.csv'
@@ -241,10 +80,10 @@ if not os.path.exists(dir_out): os.mkdir(dir_out)
 #########################################################################################
 
 ########### Load module ######################
-mod = importlib.import_module(dext+"."+model)
+mod = importlib.import_module(dext+"."+profile["model"])
 ##############################################
 
-##################### DATA ##############################################################
+##################### Reads or create data ##############################################################
 if real :
 	#------- reads data ---------------
 	df_cdts = pd.read_csv(file_members,usecols=list_observables)
@@ -266,14 +105,14 @@ else :
 	cdts      = np.empty((Ntot,3))
 
 	for s,(val,t) in enumerate(zip(unif_syn,theta_syn)):
-		rad       = brentq(lambda x:mod.cdf(x,t,params,float(Rcut))-val,a=0.0,b=float(Rcut))
+		rad       = brentq(lambda x:mod.cdf(x,t,profile["initial_values"],float(Rcut))-val,a=0.0,b=float(Rcut))
 
-		xn = np.rad2deg(rad/Dist)*np.cos(t)
-		yn = np.rad2deg(rad/Dist)*np.sin(t)
+		xn = np.rad2deg(rad/distance)*np.cos(t)
+		yn = np.rad2deg(rad/distance)*np.sin(t)
 
-		if exte == "Ell" or exte == "Seg":
-			y = xn*np.sin(params[2]) + yn*np.cos(params[2])
-			x = xn*np.cos(params[2]) - yn*np.sin(params[2])
+		if profile["extension"] == "Ell" or profile["extension"] == "Seg":
+			y = xn*np.sin(profile["initial_values"][2]) + yn*np.cos(profile["initial_values"][2])
+			x = xn*np.cos(profile["initial_values"][2]) - yn*np.sin(profile["initial_values"][2])
 
 		else:
 			x = xn
@@ -283,26 +122,27 @@ else :
 		cdts[s,1] = y + centre[1]
 		cdts[s,2] = 1
 
-radii,theta           = RotRadii(cdts,centre,Dist,0.0)
+radii,theta           = RotRadii(cdts,centre,distance,0.0)
 Rmax = np.max(radii)
+print(Rmax)
+
 
 ################# Calculates Radii and PA ################
 #------------ Load Module -------
-Module  = mod.Module(cdts,Rmax,hyp,Dist,centre)
+Module  = mod.Module(cdts,Rmax,profile["hyper-parameters"],distance,centre)
 
 #========================================================
 #--------- Dimension, walkers and inital positions -------------------------
 # number of dimensions our problem has
-ndim     = len(namepar)
-n_params = len(namepar)
+dimension    = len(profile["parameter_names"])
 
 if not os.path.isfile(dir_out+'/0-.txt'):
-	pymultinest.run(Module.LogLike,Module.Priors, n_params,resume = False, verbose = True,#n_live_points=500,
+	pymultinest.run(Module.LogLike,Module.Priors,dimension,resume = False, verbose = True,#n_live_points=500,
 		outputfiles_basename=dir_out+'/0-',multimodal=True, max_modes=2,sampling_efficiency = 'model')
 
 
 # analyse the results
-ana = pymultinest.Analyzer(n_params = n_params, outputfiles_basename=dir_out+'/0-')
+ana = pymultinest.Analyzer(n_params = dimension, outputfiles_basename=dir_out+'/0-')
 summary = ana.get_stats()
 samples = ana.get_data()[:,2:]
 
@@ -312,7 +152,7 @@ MAP   = np.array(summary["modes"][0]["maximum a posterior"])
 # sigma = np.array(summary["modes"][0]["sigma"])
 # MAP   = np.array(summary["modes"][0]["mean"])
 # MAP   = fMAP(samples)
-
+print(MAP)
 print()
 print("-" * 30, 'ANALYSIS', "-" * 30)
 print("Global Evidence:\n\t%.15e +- %.15e" % (summary['nested sampling global log-evidence'], 
@@ -325,22 +165,22 @@ samp = samples[np.random.choice(np.arange(len(samples)),size=100,replace=False)]
 ############### Stores the covariance matrix ##############
 print("Finding covariance matrix around MAP ...")
 covar = fCovar(samples,MAP)
-np.savetxt(dir_out+"/"+model+"_covariance.txt",covar,
+np.savetxt(dir_out+"/"+profile["extension"]+"_covariance.txt",covar,
 		fmt=str('%2.3f'),delimiter=" & ",newline=str("\\\ \n"))
 ############### Stores the MAP ##############
-np.savetxt(dir_out+"/"+model+"_map.txt",MAP.reshape(1,len(MAP)),
+np.savetxt(dir_out+"/"+profile["extension"]+"_map.txt",MAP.reshape(1,len(MAP)),
 		fmt=str('%2.3f'),delimiter="\t")
 
 
 # ------ establish new centre (if needed) ------
-if not exte == "None":
+if not profile["extension"] == "None":
 	centre = MAP[:2]
 
-if exte == "Ell" or exte == "Seg":
-	radii,theta        = RotRadii(cdts,centre,Dist,MAP[2])
+if profile["extension"] == "Ell" or profile["extension"] == "Seg":
+	radii,theta        = RotRadii(cdts,centre,distance,MAP[2])
 	cdts,radii,theta,Rmax = TruncSort(cdts,radii,theta,Rcut)
 else:
-	radii,theta        = RotRadii(cdts,centre,Dist,0.0)
+	radii,theta        = RotRadii(cdts,centre,distance,0.0)
 	cdts,radii,theta,Rmax = TruncSort(cdts,radii,theta,Rcut)
 
 Nr,bins,dens = DenNum(radii,Rmax,nbins=40)
@@ -352,7 +192,7 @@ lim_dens = 0.5*np.min(dens[dens != 0.0]),1.1*np.max(dens)
 
 ################## PLOTS ###############################################################
 figsize = (10,10)
-pdf = PdfPages(dir_out+"/"+model+'_fit.pdf')
+pdf = PdfPages(dir_out+"/"+profile["extension"]+'_fit.pdf')
 
 plt.figure(figsize=figsize)
 plt.fill_between(radii, Nr+np.sqrt(Nr), Nr-np.sqrt(Nr), facecolor='grey', alpha=0.5,zorder=4)
@@ -412,15 +252,20 @@ plt.scatter(gal_cdts[:,0],gal_cdts[:,1],s=10*cdts[:,3], edgecolor='grey', faceco
 plt.xlim(np.min(gal_cdts[:,0])-1.0,np.max(gal_cdts[:,0])+1)
 plt.ylim(np.min(gal_cdts[:,1])-1.0,np.max(gal_cdts[:,1])+1)
 ax.set_aspect('equal')
-if exte == "Ell" or exte == "Seg":
-	rca = math.degrees(MAP[3]/Dist)
+if profile["extension"] == "Ell" or profile["extension"] == "Seg":
+	rca = math.degrees(MAP[3]/distance)
 	p1 = centre + 5*rca*np.array([np.cos(MAP[2]),np.sin(MAP[2])])
 	# plt.scatter(p1[0],p1[1],s=20,color="red", marker='*',zorder=1)
 
-if exte == "Ctr":
-	rca = math.degrees(MAP[2]/Dist)
+if profile["extension"] == "Ctr":
+	rca = math.degrees(MAP[2]/distance)
 	rcb = rca
 	p1 = centre + 5*rca
+
+if profile["extension"] == "None":
+	rca = math.degrees(MAP[0]/distance)
+	rcb = rca
+	p1 = np.array(centre) + 5*rca
 
 
 fk5_p1 = SkyCoord(ra=p1[0],dec=p1[1],frame='icrs',unit='deg')
@@ -428,17 +273,17 @@ gal_p1 = np.array([fk5_p1.galactic.l.degree,fk5_p1.galactic.b.degree])
 angle = math.degrees(np.arctan2(gal_p1[1]-gal_centre[1],gal_p1[0]-gal_centre[0]))
 
 
-if exte == "Ell" or exte == "Seg":
-	if model in ["GKing","King","OGKing"]:
-		rcb = math.degrees(MAP[5]/Dist)
-		rta = math.degrees(MAP[4]/Dist)
-		rtb = math.degrees(MAP[6]/Dist)
+if profile["extension"] == "Ell" or profile["extension"] == "Seg":
+	if profile["extension"] in ["GKing","King","OGKing"]:
+		rcb = math.degrees(MAP[5]/distance)
+		rta = math.degrees(MAP[4]/distance)
+		rtb = math.degrees(MAP[6]/distance)
 		ell  = Ellipse(gal_centre,width=2*rta,height=2*rtb,angle=angle,clip_box=ax.bbox,
 			edgecolor="black",facecolor=None,fill=False,linewidth=2)
 		ax.add_artist(ell)
 
 	else:
-		rcb = math.degrees(MAP[4]/Dist)
+		rcb = math.degrees(MAP[4]/distance)
 
 	p1 = gal_centre + 5*rca*np.array([np.cos(math.radians(angle+180)),np.sin(math.radians(angle+180))])
 	p2 = gal_centre + 5*rca*np.array([np.cos(math.radians(angle)),np.sin(math.radians(angle))])
@@ -468,20 +313,20 @@ plt.close()
 ####################################### CORNER PLOT #########################################
 plt.rcParams["figure.figsize"] = figsize
 if real :
-	figure = corner.corner(samples, labels=namepar,truths=MAP,truth_color="red",range=rng,
+	figure = corner.corner(samples, labels=profile["parameter_names"],truths=MAP,truth_color="red",range=profile["parameter_interval"],
 		reverse=False,plot_datapoints=False,fill_contours=True,
-		quantiles=quantiles,
+		quantiles=np.array(percentiles)/100,
         show_titles=True, title_kwargs={"fontsize": 12})
 else:
-	figure = corner.corner(samples, labels=namepar,truths=params,truth_color="blue",range=rng,
+	figure = corner.corner(samples, labels=namepar,truths=profile["initial_values"],truth_color="blue",range=profile["parameter_interval"],
 		reverse=False,plot_datapoints=False,fill_contours=True,
-		quantiles=quantiles,
+		quantiles=np.array(percentiles)/100,
         show_titles=True, title_kwargs={"fontsize": 12})
 
 pdf.savefig(bbox_inches='tight')
 plt.close()
 
-if exte == "Seg":
+if profile["extension"] == "Seg":
 	#------ separates data in bins -----------
 	low  = 12.0
 	up   = 15.0
@@ -527,22 +372,22 @@ if exte == "Seg":
 	plt.close()
 
 #######################  ELLIPTICITIES ##############################
-if exte == "Ell" or exte == "Seg":
+if profile["extension"] == "Ell" or profile["extension"] == "Seg":
 	#--------- computes ellipticity of core radius
-	eps_rc     = np.array(Epsilon(samples[:,id_rc].T))
+	eps_rc     = np.array(Epsilon(samples[:,profile["id_rc"]].T))
 	samples    = np.column_stack((samples,eps_rc))
 	epsrc_mode = st.mode(eps_rc)[0]
-	quanta     = np.quantile(eps_rc,quantiles)
+	quanta     = np.percentile(eps_rc,percentiles)
 	nerc,bins,_= plt.hist(eps_rc,30, density=True,
 					ec="black",histtype='step', linestyle='solid',label="$\epsilon_{rc}$")
 	plt.annotate('$\epsilon_{rc}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(quanta) ),[0.1,0.95],xycoords="axes fraction")
 	epsilons = np.array([epsrc_mode])
 
-	if model in ["GKing","King","OGKing"]:
-		eps_rt      = np.array(Epsilon(samples[:,id_rt].T))
+	if profile["extension"] in ["GKing","King","OGKing"]:
+		eps_rt      = np.array(Epsilon(samples[:,profile["id_rt"]].T))
 		samples     = np.column_stack((samples,eps_rt))
 		epsrt_mode  = st.mode(eps_rt)[0]
-		quanta     = np.quantile(eps_rt,quantiles)
+		quanta     = np.percentile(eps_rt,percentiles)
 		nert,bins,_ = plt.hist(eps_rt,30, density=True, range=[0,1], 
 						ec="black",histtype='step', linestyle='dashed',label="$\epsilon_{rt}$")
 		plt.annotate('$\epsilon_{rt}$=[%0.2f,%0.2f,%0.2f]' % ( tuple(quanta) ),[0.7,0.95],xycoords="axes fraction")
@@ -567,11 +412,11 @@ if exte == "Ell" or exte == "Seg":
 	MAP = np.append(MAP,epsilons)
 
 #-------------- Number of systems ----------------------------------
-if model in ["GKing","King","OGKing"]:
+if profile["extension"] in ["GKing","King","OGKing"]:
 	Nrt = np.empty(len(samples))
 	for s,par in enumerate(samples):
-		Nrt[s] = mod.Number(par[id_rt[0]],0,par,Rmax,np.max(Nr))
-	quanta     = np.quantile(Nrt,quantiles)
+		Nrt[s] = mod.Number(par[profile["id_rt"][0]],0,par,Rmax,np.max(Nr))
+	quanta     = np.percentile(Nrt,percentiles)
 	plt.hist(Nrt,50, density=True, ec="black",histtype='step')
 	plt.ylabel("Density")
 	plt.xlabel("Number of stars within $r_t$")
@@ -582,8 +427,8 @@ if model in ["GKing","King","OGKing"]:
 
 #--------- Total mass -----
 	
-	LogMassrj  = np.log10(MassRj(samples[:,id_rt[0]]))
-	quanta  = np.quantile(LogMassrj,quantiles)
+	LogMassrj  = np.log10(MassRj(samples[:,profile["id_rt"][0]]))
+	quanta  = np.percentile(LogMassrj,percentiles)
 	plt.hist(LogMassrj,50, density=True, ec="black",histtype='step')
 	plt.ylabel("Density")
 	plt.xlabel("Log Mass [$M_\odot$]")
